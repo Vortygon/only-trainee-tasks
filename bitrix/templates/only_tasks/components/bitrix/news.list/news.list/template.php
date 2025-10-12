@@ -28,9 +28,9 @@ $this->AddDeleteAction($arItem['ID'], $arItem['DELETE_LINK'], CIBlock::GetArrayB
 	<header>
 		<?if($arParams["DISPLAY_NAME"]!="N" && $arParams["NAME"]):?>
 			<?if(!$arParams["HIDE_LINK_WHEN_NO_DETAIL"] || ($arItem["DETAIL_TEXT"] && $arResult["USER_HAVE_ACCESS"])):?>
-				<a href="<?=$arItem["DETAIL_PAGE_URL"]?>"><h2><?echo $arItem["NAME"]?></h2></a>
+				<a href="<?=$arItem["DETAIL_PAGE_URL"]?>"><h3><?echo $arItem["NAME"];?></h3></a>
 			<?else:?>
-				<h2><?echo $arItem["NAME"]?></h2>
+				<h3><?echo $arItem["NAME"];?></h3>
 			<?endif?>
 		<?endif?>
 	</header>
