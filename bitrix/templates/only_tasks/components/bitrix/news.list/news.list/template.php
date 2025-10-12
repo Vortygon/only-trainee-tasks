@@ -12,7 +12,7 @@
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 ?>
-<!-- <div class="news-list"> -->
+<div class="news-list">
   <?if($arParams["DISPLAY_TOP_PAGER"]):?>
     <?=$arResult["NAV_STRING"]?><br />
   <?endif;?>
@@ -20,10 +20,11 @@ $this->setFrameMode(true);
   <div id="<?=$this->GetEditAreaId($arItem['ID']);?>">
     <div class="article-list">
       <?foreach($arResult["ITEMS"] as $arItem):?>
-      <?
-      $this->AddEditAction($arItem['ID'], $arItem['EDIT_LINK'], CIBlock::GetArrayByID($arItem["IBLOCK_ID"], "ELEMENT_EDIT"));
-      $this->AddDeleteAction($arItem['ID'], $arItem['DELETE_LINK'], CIBlock::GetArrayByID($arItem["IBLOCK_ID"], "ELEMENT_DELETE"), array("CONFIRM" => GetMessage('CT_BNL_ELEMENT_DELETE_CONFIRM')));
-      ?>
+
+        <?
+        $this->AddEditAction($arItem['ID'], $arItem['EDIT_LINK'], CIBlock::GetArrayByID($arItem["IBLOCK_ID"], "ELEMENT_EDIT"));
+        $this->AddDeleteAction($arItem['ID'], $arItem['DELETE_LINK'], CIBlock::GetArrayByID($arItem["IBLOCK_ID"], "ELEMENT_DELETE"), array("CONFIRM" => GetMessage('CT_BNL_ELEMENT_DELETE_CONFIRM')));
+        ?>
 
         <a class="article-item article-list__item" href="<?=$arItem["DETAIL_PAGE_URL"]?>" data-anim="anim-3">
           <div class="article-item__background">
@@ -43,9 +44,9 @@ $this->setFrameMode(true);
 
       <?endforeach;?>
     </div>
-
-    <?if($arParams["DISPLAY_BOTTOM_PAGER"]):?>
-      <br /><?=$arResult["NAV_STRING"]?>
-    <?endif;?>
   </div>
-<!-- </div> -->
+
+  <?if($arParams["DISPLAY_BOTTOM_PAGER"]):?>
+    <br /><?=$arResult["NAV_STRING"]?>
+  <?endif;?>
+</div>
