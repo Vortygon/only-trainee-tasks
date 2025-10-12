@@ -32,7 +32,7 @@ $this->setFrameMode(true);
             <?endif?>
           </div>
           <div class="article-item__wrapper">
-              <?if($arParams["DISPLAY_NAME"]!="N" && $arParams["NAME"]):?>
+              <?if($arParams["DISPLAY_NAME"]!="N" && $arItem["NAME"]):?>
                 <div class="article-item__title"><?echo $arItem["NAME"];?></div>
               <?endif?>
               <?if($arParams["DISPLAY_PREVIEW_TEXT"]!="N" && $arItem["PREVIEW_TEXT"]):?>
