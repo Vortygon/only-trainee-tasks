@@ -1,9 +1,8 @@
 <?
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-	die();
-
-$arTemplate = Array(
-	'NAME' => 'Only Tasks',
-	'DESCRIPTION' => 'Only задания'
+$arTemplate = array (
+  'NAME' => 'Only Tasks',
+  'DESCRIPTION' => 'Only задания',
+  'SORT' => '',
+  'TYPE' => '',
 );
 ?>
