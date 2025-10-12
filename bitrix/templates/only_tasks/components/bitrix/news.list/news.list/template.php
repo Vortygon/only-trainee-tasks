@@ -25,6 +25,7 @@ $this->AddDeleteAction($arItem['ID'], $arItem['DELETE_LINK'], CIBlock::GetArrayB
 
 
 <div id="<?=$this->GetEditAreaId($arItem['ID']);?>">
+  <div id="barba-wrapper">
     <div class="article-list">
       <a class="article-item article-list__item" href="<?=$arItem["DETAIL_PAGE_URL"]?>" data-anim="anim-3">
         <div class="article-item__background">
@@ -36,6 +37,7 @@ $this->AddDeleteAction($arItem['ID'], $arItem['DELETE_LINK'], CIBlock::GetArrayB
         </div>
       </a>
     </div>
+  </div>
 </div>
 
 <!-- <article id="<?=$this->GetEditAreaId($arItem['ID']);?>">
