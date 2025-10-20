@@ -9,10 +9,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var array $arResult
  */
 
-if ($arResult["isFormErrors"] == "Y") 
-{
-    echo $arResult["FORM_ERRORS_TEXT"];
-}
+// if ($arResult["isFormErrors"] == "Y") 
+// {
+//     echo $arResult["FORM_ERRORS_TEXT"];
+// }
 
 echo $arResult["FORM_NOTE"] ?? '';
 
