@@ -9,17 +9,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var array $arResult
  */
 
-// if ($arResult["isFormErrors"] == "Y") 
-// {
-//     echo $arResult["FORM_ERRORS_TEXT"];
-// }
-
-echo $arResult["FORM_NOTE"] ?? '';
-
 if ($arResult["isFormNote"] != "Y")
 {
 ?>
-<?=$arResult["FORM_HEADER"]?>
 <div class="contact-form">
     <div class="contact-form__head">
         <? if ($arResult["isFormTitle"]): ?>
@@ -86,18 +78,8 @@ if ($arResult["isFormNote"] != "Y")
                 <div class="input__notification"></div>
             </label></div>
         </div>
-        
-        <!-- <input <?=(intval($arResult["F_RIGHT"]) < 10 ? "disabled=\"disabled\"" : "");?> type="submit" name="web_form_submit" value="<?=htmlspecialcharsbx(trim($arResult["arForm"]["BUTTON"]) == '' ? GetMessage("FORM_ADD") : $arResult["arForm"]["BUTTON"]);?>" />
-        <?if ($arResult["F_RIGHT"] >= 15):?>
-        &nbsp;<input type="hidden" name="web_form_apply" value="Y" /><input type="submit" name="web_form_apply" value="<?=GetMessage("FORM_APPLY")?>" />
-        <?endif;?>
-        &nbsp;<input type="reset" value="<?=GetMessage("FORM_RESET");?>" /> -->
-        
         <div class="contact-form__bottom">
-            <div class="contact-form__bottom-policy">Нажимая &laquo;Отправить&raquo;, Вы&nbsp;подтверждаете, что
-                ознакомлены, полностью согласны и&nbsp;принимаете условия &laquo;Согласия на&nbsp;обработку персональных
-                данных&raquo;.
-            </div>
+            <div class="contact-form__bottom-policy"><?=GetMessage("AGREEMENT")?></div>
             <button class="form-button contact-form__bottom-button" data-success="Отправлено"
                     data-error="Ошибка отправки">
                 <div class="form-button__title">
@@ -107,7 +89,6 @@ if ($arResult["isFormNote"] != "Y")
         </div>
     </form>
 </div>
-<?=$arResult["FORM_FOOTER"]?>
 <?
 } //endif (isFormNote)
 
