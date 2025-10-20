@@ -1,7 +1,8 @@
-# Задание 1
-> ### [ Сертификат прохождения тестов "Контент-менеджер" ](readme/Контент-менеджер.pdf)
+# Задание 2
+> ### [ Сертификат прохождения тестов "Администратор. Базовый" ](readme/Контент-менеджер.pdf)
+> ### [ Сертификат прохождения тестов "Администратор. Модули" ](readme/Контент-менеджер.pdf)
 
-> ### [Файл шаблона news.list - ``local/templates/only_tasks/components/bitrix/news.list/news.list/template.php`` ](local/templates/only_tasks/components/bitrix/news.list/news.list/template.php)
+> ### [Файл шаблона form.result.new - ``local/templates/only_tasks/components/bitrix/form.result.new/form.result.new/template.php`` ](local/templates/only_tasks/components/bitrix/form.result.new/form.result.new/template.php)
 
 > ### Скриншот
-> ![](readme/screenshot_1.png)
+> ![](readme/screenshot_2.png)
