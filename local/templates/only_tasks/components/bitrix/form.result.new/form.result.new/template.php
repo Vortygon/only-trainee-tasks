@@ -50,7 +50,7 @@ if ($arResult["isFormNote"] != "Y")
                     <?if ($arQuestion["REQUIRED"] == "Y"):?>
                     required=""
                     <?endif;?>
-                    <?if ($arQuestion["$FIELD_SID"] == "medicine_phone"):?>
+                    <?if ($FIELD_SID == "medicine_phone"):?>
                     data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" maxlength="12" x-autocompletetype="phone-full"
                     <?endif;?>
                 >
