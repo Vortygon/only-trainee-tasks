@@ -45,7 +45,7 @@ if ($arResult["isFormNote"] != "Y")
                                 <input 
                                     class="input__input" type="tel" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
                                     data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" maxlength="12" x-autocompletetype="phone-full"
-                                    <?=(intval($arQuestion["REQUIRED"] == "Y" ? "required=\"\"" : ""))?>
+                                    <?=(intval($arQuestion["REQUIRED"] == "Y") ? "required=\"\"" : "")?>
                                 >
                         <?
                                 break;
@@ -53,7 +53,7 @@ if ($arResult["isFormNote"] != "Y")
                         ?>
                                 <input 
                                     class="input__input" type="<?=$arQuestion['STRUCTURE'][0]['FIELD_TYPE']?>" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
-                                    <?=(intval($arQuestion["REQUIRED"] == "Y" ? "required=\"\"" : ""))?>
+                                    <?=(intval($arQuestion["REQUIRED"] == "Y") ? "required=\"\"" : "")?>
                                 >
                         <?
                                 break;
