@@ -29,7 +29,7 @@ if ($arResult["isFormNote"] != "Y")
             <div class="contact-form__head-text"><?=$arResult["FORM_DESCRIPTION"]?></div>
         <? endif; ?>
     </div>
-    <form class="contact-form__form" action="<?=POST_FORM_ACTION_URI?>" method="POST">
+    <form name="<?=$arResult['WEB_FORM_NAME']?>" class="contact-form__form" action="<?=POST_FORM_ACTION_URI?>" method="POST">
         <div class="contact-form__form-inputs">
             <?
             foreach ($arResult["QUESTIONS"] as $FIELD_SID => $arQuestion)
