@@ -34,6 +34,7 @@ if ($arResult["isFormNote"] != "Y")
             <?
             foreach ($arResult["QUESTIONS"] as $FIELD_SID => $arQuestion)
             {
+                if ($FIELD_SID == 'medicine_message') continue;
                 if ($arQuestion['STRUCTURE'][0]['FIELD_TYPE'] == 'hidden')
                 {
                     echo $arQuestion["HTML_CODE"];
@@ -52,21 +53,15 @@ if ($arResult["isFormNote"] != "Y")
                                 <input 
                                     class="input__input" type="tel" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
                                     data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" maxlength="12" x-autocompletetype="phone-full"
-                                    <?if ($arQuestion["REQUIRED"] == "Y"):?>
-                                    required=""
-                                    <?endif;?>
+                                    <?=(intval($arQuestion["REQUIRED"] == "Y" ? "required=\"\"" : ""))?>
                                 >
                         <?
-                                break;
-                            case "medicine_message":
                                 break;
                             default:
                         ?>
                                 <input 
                                     class="input__input" type="<?=$arQuestion['STRUCTURE'][0]['FIELD_TYPE']?>" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
-                                    <?if ($arQuestion["REQUIRED"] == "Y"):?>
-                                    required=""
-                                    <?endif;?>
+                                    <?=(intval($arQuestion["REQUIRED"] == "Y" ? "required=\"\"" : ""))?>
                                 >
                         <?
                                 break;
@@ -91,11 +86,25 @@ if ($arResult["isFormNote"] != "Y")
                 <div class="input__notification"></div>
             </label></div>
         </div>
-        <input <?=(intval($arResult["F_RIGHT"]) < 10 ? "disabled=\"disabled\"" : "");?> type="submit" name="web_form_submit" value="<?=htmlspecialcharsbx(trim($arResult["arForm"]["BUTTON"]) == '' ? GetMessage("FORM_ADD") : $arResult["arForm"]["BUTTON"]);?>" />
+        
+        <!-- <input <?=(intval($arResult["F_RIGHT"]) < 10 ? "disabled=\"disabled\"" : "");?> type="submit" name="web_form_submit" value="<?=htmlspecialcharsbx(trim($arResult["arForm"]["BUTTON"]) == '' ? GetMessage("FORM_ADD") : $arResult["arForm"]["BUTTON"]);?>" />
         <?if ($arResult["F_RIGHT"] >= 15):?>
         &nbsp;<input type="hidden" name="web_form_apply" value="Y" /><input type="submit" name="web_form_apply" value="<?=GetMessage("FORM_APPLY")?>" />
         <?endif;?>
-        &nbsp;<input type="reset" value="<?=GetMessage("FORM_RESET");?>" />
+        &nbsp;<input type="reset" value="<?=GetMessage("FORM_RESET");?>" /> -->
+        
+        <div class="contact-form__bottom">
+            <div class="contact-form__bottom-policy">Нажимая &laquo;Отправить&raquo;, Вы&nbsp;подтверждаете, что
+                ознакомлены, полностью согласны и&nbsp;принимаете условия &laquo;Согласия на&nbsp;обработку персональных
+                данных&raquo;.
+            </div>
+            <button class="form-button contact-form__bottom-button" data-success="Отправлено"
+                    data-error="Ошибка отправки">
+                <div class="form-button__title">
+                    <?=htmlspecialcharsbx(trim($arResult["arForm"]["BUTTON"]) == '' ? GetMessage("FORM_ADD") : $arResult["arForm"]["BUTTON"]);?>
+                </div>
+            </button>
+        </div>
     </form>
 </div>
 <?=$arResult["FORM_FOOTER"]?>
