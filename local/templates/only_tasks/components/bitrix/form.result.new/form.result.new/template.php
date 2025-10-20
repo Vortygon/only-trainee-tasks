@@ -22,12 +22,12 @@ if ($arResult["isFormNote"] != "Y")
 <?=$arResult["FORM_HEADER"]?>
 <div class="contact-form">
     <div class="contact-form__head">
-        <?php if ($arResult["isFormTitle"]): ?>
+        <? if ($arResult["isFormTitle"]): ?>
             <div class="contact-form__head-title"><?=$arResult["FORM_TITLE"]?></div>
-        <?php endif; ?>
-        <?php if ($arResult["isFormDescription"]): ?>
+        <? endif; ?>
+        <? if ($arResult["isFormDescription"]): ?>
             <div class="contact-form__head-text"><?=$arResult["FORM_DESCRIPTION"]?></div>
-        <?php endif; ?>
+        <? endif; ?>
     </div>
     <form class="contact-form__form" action="<?=POST_FORM_ACTION_URI?>" method="POST">
         <?
@@ -41,10 +41,24 @@ if ($arResult["isFormNote"] != "Y")
             {
         ?>
             <div class="input contact-form__input"><label class="input__label" for="medicine_name">
-                <div class="input__label-text"><?=$arQuestion["CAPTION"]?></div>
-                <input class="input__input" type="text" id="medicine_name" name="medicine_name" value=""
-                       required="">
-                <div class="input__notification"><?=htmlspecialcharsbx($arResult["FORM_ERRORS"][$FIELD_SID])?></div>
+                <div class="input__label-text">
+                    <?=$arQuestion["CAPTION"]?>
+                    <?if ($arQuestion["REQUIRED"] == "Y"):?><?=$arResult["REQUIRED_SIGN"];?><?endif;?>
+                </div>
+                <input 
+                    class="input__input" type="text" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
+                    <?if ($arQuestion["REQUIRED"] == "Y"):?>
+                    required=""
+                    <?endif;?>
+                    <?if ($arQuestion["$FIELD_SID"] == "medicine_phone"):?>
+                    data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" maxlength="12" x-autocompletetype="phone-full"
+                    <?endif;?>
+                >
+                <?if (isset($arResult["FORM_ERRORS"][$FIELD_SID])):?>
+                <div class="input__notification">
+                    <?=htmlspecialcharsbx($arResult["FORM_ERRORS"][$FIELD_SID])?>
+                </div>
+                <?endif;?>
             </label></div>
 
             <!-- <tr>
