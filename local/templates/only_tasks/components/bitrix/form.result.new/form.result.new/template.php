@@ -60,7 +60,7 @@ if ($arResult["isFormNote"] != "Y")
                     default:
                 ?>
                         <input 
-                            class="input__input" type="<?=$FIELD_TYPE?>" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
+                            class="input__input" type="<?=$arQuestion["FIELD_TYPE"]?>" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
                             <?if ($arQuestion["REQUIRED"] == "Y"):?>
                             required=""
                             <?endif;?>
