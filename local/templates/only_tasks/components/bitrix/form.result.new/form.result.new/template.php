@@ -45,6 +45,30 @@ if ($arResult["isFormNote"] != "Y")
                     <?=$arQuestion["CAPTION"]?>
                     <?if ($arQuestion["REQUIRED"] == "Y"):?><?=$arResult["REQUIRED_SIGN"];?><?endif;?>
                 </div>
+                <? switch ($FIELD_SID) {
+                    case "medicine_phone":
+                ?>
+                        <input 
+                            class="input__input" type="tel" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
+                            data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" maxlength="12" x-autocompletetype="phone-full"
+                            <?if ($arQuestion["REQUIRED"] == "Y"):?>
+                            required=""
+                            <?endif;?>
+                        >
+                <?
+                        break;
+                    default:
+                ?>
+                        <input 
+                            class="input__input" type="<?=$FIELD_TYPE?>" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
+                            <?if ($arQuestion["REQUIRED"] == "Y"):?>
+                            required=""
+                            <?endif;?>
+                        >
+                <?
+                        break;
+                } 
+                ?>
                 <input 
                     class="input__input" type="text" id="<?=$FIELD_SID?>" name="<?=$FIELD_SID?>" value=""
                     <?if ($arQuestion["REQUIRED"] == "Y"):?>
