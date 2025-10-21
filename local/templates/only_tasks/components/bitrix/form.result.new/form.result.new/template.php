@@ -20,9 +20,9 @@ if ($arResult['isFormNote'] != 'Y') {
             <?php endif; ?>
         </div>
         <form name="<?= $arResult['WEB_FORM_NAME'] ?>" class="contact-form__form" action="<?= POST_FORM_ACTION_URI ?>" method="POST">
-			<input type="hidden" name="WEB_FORM_ID" value="<?= $arParams['WEB_FORM_ID'] ?>">
-			<input type="hidden" name="web_form_submit" value="Y">
-			<?= bitrix_sessid_post() ?>
+            <input type="hidden" name="WEB_FORM_ID" value="<?= $arParams['WEB_FORM_ID'] ?>">
+            <input type="hidden" name="web_form_submit" value="Y">
+            <?= bitrix_sessid_post() ?>
             <div class="contact-form__form-inputs">
                 <?php
                 foreach ($arResult['QUESTIONS'] as $FIELD_SID => $arQuestion) {
@@ -38,35 +38,40 @@ if ($arResult['isFormNote'] != 'Y') {
                             <label class="input__label" for="<?= $FIELD_SID ?>">
                                 <div class="input__label-text">
                                     <?= $arQuestion['CAPTION'] ?>
-                                    <?php if ($arQuestion['REQUIRED'] == 'Y'): ?><?= $arResult['REQUIRED_SIGN']; ?><?php endif; ?>
+                                    <?php if ($arQuestion['REQUIRED'] == 'Y'): ?>
+                                        <?= $arResult['REQUIRED_SIGN']; ?>
+                                    <?php endif; ?>
                                 </div>
                                 <?php
-                                $requiredFlag = $arQuestion['REQUIRED'] == 'Y' ? "required=''" : "";
-                                $classFlag = empty($arResult['FORM_ERRORS'][$FIELD_SID]) ? "class='input__input'" : "class='input__input invalid'";  
+                                $requiredFlag = $arQuestion['REQUIRED'] == 'Y' ? "required=''" : '';
+                                $classFlag = empty($arResult['FORM_ERRORS'][$FIELD_SID]) 
+                                    ? "class='input__input'" 
+                                    : "class='input__input invalid'";
+                                
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
-										echo str_replace(
+                                        echo str_replace(
                                             '<input',
                                             '<input 
-												type="tel" 
-												data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
-												maxlength="12" 
-												x-autocompletetype="phone-full"
-                                                ' . $classFlag . $requiredFlag,
-                                            $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
+                                                type="tel" 
+                                                data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
+                                                maxlength="12" 
+                                                x-autocompletetype="phone-full"
+                                                ' . $classFlag . ' ' . $requiredFlag,
+                                            $arResult['QUESTIONS'][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
                                     default:
                                         echo str_replace(
                                             '<input',
-                                            '<input ' . $classFlag . $requiredFlag,
-                                            $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
+                                            '<input ' . $classFlag . ' ' . $requiredFlag,
+                                            $arResult['QUESTIONS'][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
                                 }
                                 ?>
                                 <div class="input__notification">
-                                    <?php 
+                                    <?php
                                     switch ($FIELD_SID) {
                                         case 'medicine_phone':
                                             echo GetMessage('PHONE_ERROR');
@@ -77,7 +82,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                         default:
                                             echo GetMessage('TEXT_ERROR');
                                             break;
-                                    } 
+                                    }
                                     ?>
                                 </div>
                             </label>
@@ -105,7 +110,6 @@ if ($arResult['isFormNote'] != 'Y') {
             <div class="contact-form__bottom">
                 <div class="contact-form__bottom-policy">
                     <?= GetMessage('AGREEMENT') ?>
-                    <?= $arResult['FORM_ERRORS_TEXT']; ?>
                 </div>
                 <button 
                     class="form-button contact-form__bottom-button" 
