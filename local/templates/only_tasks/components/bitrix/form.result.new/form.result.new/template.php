@@ -55,7 +55,6 @@ if ($arResult['isFormNote'] != 'Y') {
                                                     maxlength="12" 
                                                     x-autocompletetype="phone-full"
                                                     <?= (intval($arQuestion[\'REQUIRED\'] == \'Y\') ? \'required=""\' : \'\') ?>
-                                                >
                                             ',
                                             $arQuestion['HTML_CODE']
                                         );
@@ -84,7 +83,6 @@ if ($arResult['isFormNote'] != 'Y') {
                                                     name="<?= $FIELD_SID ?>" 
                                                     value=""
                                                     <?= (intval($arQuestion[\'REQUIRED\'] == \'Y\') ? \'required=""\' : \'\') ?>
-                                                >
                                             ',
                                             $arQuestion['HTML_CODE']
                                         )
