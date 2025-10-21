@@ -7,10 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * @var array $arResult
  */
-if ($arResult["isFormErrors"] == "Y"):?><?=$arResult["FORM_ERRORS_TEXT"];?><?endif;?><?
+
 if ($arResult['isFormNote'] != 'Y') {
     ?>
-	<?=$arResult["FORM_HEADER"]?>
     <div class="contact-form">
         <div class="contact-form__head">
             <?php if ($arResult['isFormTitle']): ?>
@@ -21,6 +20,9 @@ if ($arResult['isFormNote'] != 'Y') {
             <?php endif; ?>
         </div>
         <form name="<?= $arResult['WEB_FORM_NAME'] ?>" class="contact-form__form" action="<?= POST_FORM_ACTION_URI ?>" method="POST">
+			<input type="hidden" name="WEB_FORM_ID" value="<?=$arParams['WEB_FORM_ID']?>">
+			<input type="hidden" name="web_form_submit" value="Y">
+			<?=bitrix_sessid_post()?>
             <div class="contact-form__form-inputs">
                 <?php
                 foreach ($arResult['QUESTIONS'] as $FIELD_SID => $arQuestion) {
