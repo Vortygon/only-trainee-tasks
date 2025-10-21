@@ -79,7 +79,7 @@ if ($arResult["isFormNote"] != "Y")
             </label></div>
         </div>
         <div class="contact-form__bottom">
-            <div class="contact-form__bottom-policy"><?=GetMessage("AGREEMENT")?></div>
+            <div class="contact-form__bottom-policy"><?=GetMessage("AGREEMENT")?><?=$arResult["FORM_ERRORS_TEXT"];?></div>
             <button class="form-button contact-form__bottom-button" data-success="Отправлено"
                     data-error="Ошибка отправки">
                 <div class="form-button__title">
