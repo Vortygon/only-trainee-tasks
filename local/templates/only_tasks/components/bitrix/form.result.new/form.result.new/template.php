@@ -7,9 +7,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
 /**
  * @var array $arResult
  */
-
+if ($arResult["isFormErrors"] == "Y"):?><?=$arResult["FORM_ERRORS_TEXT"];?><?endif;?><?
 if ($arResult['isFormNote'] != 'Y') {
     ?>
+	<?=$arResult["FORM_HEADER"]?>
     <div class="contact-form">
         <div class="contact-form__head">
             <?php if ($arResult['isFormTitle']): ?>
@@ -42,8 +43,19 @@ if ($arResult['isFormNote'] != 'Y') {
                                 <?php
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
+										echo str_replace(
+                                            '<input',
+                                            '<input 
+												class="input__input" 
+												type="tel" 
+												data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" 
+												maxlength="12" 
+												x-autocompletetype="phone-full"
+                                        	',
+                                            $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
+                                        );
                                         ?>
-                                        <input 
+                                        <!-- <input 
                                             class="input__input" 
                                             type="tel" 
                                             id="<?= $FIELD_SID ?>" 
@@ -53,14 +65,14 @@ if ($arResult['isFormNote'] != 'Y') {
                                             maxlength="12" 
                                             x-autocompletetype="phone-full"
                                             <?= (intval($arQuestion['REQUIRED'] == 'Y') ? 'required=""' : '') ?>
-                                        >
+                                        > -->
                                         <?php
                                         break;
                                     default:
-                                        str_replace(
+                                        echo str_replace(
                                             '<input',
                                             '<input class="input__input" ',
-                                            $arQuestion['HTML_CODE']
+                                            $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
                                         ?>
                                         <!-- <input 
