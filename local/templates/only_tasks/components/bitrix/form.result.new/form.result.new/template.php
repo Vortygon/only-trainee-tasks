@@ -42,34 +42,18 @@ if ($arResult['isFormNote'] != 'Y') {
                                 <?php
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
-                                        echo str_replace(
-                                            '<input',
-                                            '
-                                                <input 
-                                                    class="input__input" 
-                                                    type="tel" 
-                                                    id="<?= $FIELD_SID ?>" 
-                                                    name="<?= $FIELD_SID ?>" 
-                                                    value=""
-                                                    data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
-                                                    maxlength="12" 
-                                                    x-autocompletetype="phone-full"
-                                                    <?= (intval($arQuestion[\'REQUIRED\'] == \'Y\') ? \'required=""\' : \'\') ?>
-                                            ',
-                                            $arQuestion['HTML_CODE']
-                                        );
                                         ?>
-                                        <!-- <input 
+                                        <input 
                                             class="input__input" 
                                             type="tel" 
                                             id="<?= $FIELD_SID ?>" 
-                                            name="<?= $FIELD_SID ?>" 
+                                            name="form" 
                                             value=""
                                             data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" 
                                             maxlength="12" 
                                             x-autocompletetype="phone-full"
                                             <?= (intval($arQuestion['REQUIRED'] == 'Y') ? 'required=""' : '') ?>
-                                        > -->
+                                        >
                                         <?php
                                         break;
                                     default:
@@ -78,23 +62,18 @@ if ($arResult['isFormNote'] != 'Y') {
                                             '
                                                 <input 
                                                     class="input__input" 
-                                                    type="<?= $arQuestion[\'STRUCTURE\'][0][\'FIELD_TYPE\'] ?>" 
-                                                    id="<?= $FIELD_SID ?>" 
-                                                    name="<?= $FIELD_SID ?>" 
-                                                    value=""
-                                                    <?= (intval($arQuestion[\'REQUIRED\'] == \'Y\') ? \'required=""\' : \'\') ?>
                                             ',
                                             $arQuestion['HTML_CODE']
                                         );
                                         ?>
-                                        <input 
+                                        <!-- <input 
                                             class="input__input" 
                                             type="<?= $arQuestion['STRUCTURE'][0]['FIELD_TYPE'] ?>" 
                                             id="<?= $FIELD_SID ?>" 
                                             name="<?= $FIELD_SID ?>" 
                                             value=""
                                             <?= (intval($arQuestion['REQUIRED'] == 'Y') ? 'required=""' : '') ?>
-                                        >
+                                        > -->
                                         <?php
                                         break;
                                 }
