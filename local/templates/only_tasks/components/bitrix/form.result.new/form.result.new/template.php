@@ -42,7 +42,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                 <?php
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
-                                        str_replace(
+                                        echo str_replace(
                                             '<input',
                                             '
                                                 <input 
@@ -85,7 +85,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                                     <?= (intval($arQuestion[\'REQUIRED\'] == \'Y\') ? \'required=""\' : \'\') ?>
                                             ',
                                             $arQuestion['HTML_CODE']
-                                        )
+                                        );
                                         ?>
                                         <input 
                                             class="input__input" 
