@@ -51,7 +51,7 @@ if ($arResult['isFormNote'] != 'Y') {
 												data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
 												maxlength="12" 
 												x-autocompletetype="phone-full"
-                                                ' . ($arQuestion['REQUIRED'] == 'Y') ? "required=''" : "",
+                                                ' . ($arQuestion['REQUIRED'] == 'Y' ? "required=''" : ""),
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
