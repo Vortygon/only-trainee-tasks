@@ -59,10 +59,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                     default:
                                         str_replace(
                                             '<input',
-                                            '
-                                                <input 
-                                                    class="input__input" 
-                                            ',
+                                            '<input class="input__input" ',
                                             $arQuestion['HTML_CODE']
                                         );
                                         ?>
