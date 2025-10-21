@@ -46,7 +46,7 @@ if ($arResult['isFormNote'] != 'Y') {
 										echo str_replace(
                                             '<input',
                                             '<input 
-												class="input__input" 
+												class="input__input <?= isset($arResult[\'ERRORS\'][$FIELD_SID]) ? "invalid" : "" ?>" 
 												type="tel" 
 												data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
 												maxlength="12" 
@@ -59,7 +59,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                         echo str_replace(
                                             '<input',
                                             '<input 
-                                                class="input__input"
+												class="input__input <?= isset($arResult[\'ERRORS\'][$FIELD_SID]) ? "invalid" : "" ?>" 
                                             ' . ($arQuestion['REQUIRED'] == 'Y' ? "required=''" : ""),
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
