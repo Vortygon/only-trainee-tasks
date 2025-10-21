@@ -50,10 +50,10 @@ if ($arResult['isFormNote'] != 'Y') :
                                     <?php endif; ?>
                                 </div>
                                 <?php
-                                $classFlag = empty($arResult['FORM_ERRORS'][$FIELD_SID])
+                                $classAttr = empty($arResult['FORM_ERRORS'][$FIELD_SID])
                                     ? "class='input__input'"
                                     : "class='input__input invalid'";
-                                $requiredFlag = $arQuestion['REQUIRED'] == 'Y'
+                                $requiredAttr = $arQuestion['REQUIRED'] == 'Y'
                                     ? "required=''"
                                     : '';
                                 switch ($FIELD_SID) {
@@ -65,14 +65,14 @@ if ($arResult['isFormNote'] != 'Y') :
                                                 data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
                                                 maxlength="12" 
                                                 x-autocompletetype="phone-full"
-                                                ' . $classFlag . ' ' . $requiredFlag,
+                                                ' . $classAttr . ' ' . $requiredAttr,
                                             $arResult['QUESTIONS'][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
                                     default:
                                         echo str_replace(
                                             '<input',
-                                            '<input ' . $classFlag . ' ' . $requiredFlag,
+                                            '<input ' . $classAttr . ' ' . $requiredAttr,
                                             $arResult['QUESTIONS'][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
