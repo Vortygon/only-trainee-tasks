@@ -48,7 +48,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                             '<input 
 												class="input__input" 
 												type="tel" 
-												data-inputmask="'mask': '+79999999999', 'clearIncomplete': 'true'" 
+												data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
 												maxlength="12" 
 												x-autocompletetype="phone-full"
                                         	',
