@@ -8,32 +8,39 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
  * @var array $arResult
  */
 
-if ($arResult['isFormNote'] != 'Y') {
-    ?>
+if ($arResult['isFormNote'] != 'Y') :
+?>
     <div class="contact-form">
         <div class="contact-form__head">
             <?php if ($arResult['isFormTitle']): ?>
-                <div class="contact-form__head-title"><?= $arResult['FORM_TITLE'] ?></div>
+                <div class="contact-form__head-title">
+                    <?= $arResult['FORM_TITLE'] ?>
+                </div>
             <?php endif; ?>
             <?php if ($arResult['isFormDescription']): ?>
-                <div class="contact-form__head-text"><?= $arResult['FORM_DESCRIPTION'] ?></div>
+                <div class="contact-form__head-text">
+                    <?= $arResult['FORM_DESCRIPTION'] ?>
+                </div>
             <?php endif; ?>
         </div>
-        <form name="<?= $arResult['WEB_FORM_NAME'] ?>" class="contact-form__form" action="<?= POST_FORM_ACTION_URI ?>" method="POST">
+        <form 
+            name="<?= $arResult['WEB_FORM_NAME'] ?>" 
+            class="contact-form__form" 
+            action="<?= POST_FORM_ACTION_URI ?>" 
+            method="POST"
+        >
             <input type="hidden" name="WEB_FORM_ID" value="<?= $arParams['WEB_FORM_ID'] ?>">
             <input type="hidden" name="web_form_submit" value="Y">
             <?= bitrix_sessid_post() ?>
+
             <div class="contact-form__form-inputs">
-                <?php
-                foreach ($arResult['QUESTIONS'] as $FIELD_SID => $arQuestion) {
-                    if ($FIELD_SID == 'medicine_message') {
-                        continue;
-                    }
-                    
-                    if ($arQuestion['STRUCTURE'][0]['FIELD_TYPE'] == 'hidden') {
-                        echo $arQuestion['HTML_CODE'];
-                    } else {
-                        ?>
+                <?php foreach ($arResult['QUESTIONS'] as $FIELD_SID => $arQuestion) : ?>
+                    <?php if ($FIELD_SID == 'medicine_message') : ?>
+                        <?php continue; ?>
+                    <?php endif; ?>
+                    <?php if ($arQuestion['STRUCTURE'][0]['FIELD_TYPE'] == 'hidden') : ?>
+                        <?= $arQuestion['HTML_CODE'] ?>
+                    <?php else : ?>
                         <div class="input contact-form__input">
                             <label class="input__label" for="<?= $FIELD_SID ?>">
                                 <div class="input__label-text">
@@ -43,11 +50,12 @@ if ($arResult['isFormNote'] != 'Y') {
                                     <?php endif; ?>
                                 </div>
                                 <?php
-                                $requiredFlag = $arQuestion['REQUIRED'] == 'Y' ? "required=''" : '';
-                                $classFlag = empty($arResult['FORM_ERRORS'][$FIELD_SID]) 
-                                    ? "class='input__input'" 
+                                $classFlag = empty($arResult['FORM_ERRORS'][$FIELD_SID])
+                                    ? "class='input__input'"
                                     : "class='input__input invalid'";
-                                
+                                $requiredFlag = $arQuestion['REQUIRED'] == 'Y'
+                                    ? "required=''"
+                                    : '';
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
                                         echo str_replace(
@@ -87,22 +95,20 @@ if ($arResult['isFormNote'] != 'Y') {
                                 </div>
                             </label>
                         </div>
-                        <?php
-                    }
-                }
-                ?>
+                    <?php endif; ?>
+                <?php endforeach; ?> 
             </div>
             <div class="contact-form__form-message">
                 <div class="input">
                     <label class="input__label">
-                        <div class="input__label-text"><?= $arResult['QUESTIONS']['medicine_message']['CAPTION'] ?></div>
-                        <?php
-                        echo str_replace(
+                        <div class="input__label-text">
+                            <?= $arResult['QUESTIONS']['medicine_message']['CAPTION'] ?>
+                        </div>
+                        <?= str_replace(
                             '<textarea',
                             '<textarea class="input__input"',
                             $arResult['QUESTIONS']['medicine_message']['HTML_CODE']
-                        );
-                        ?>
+                        ) ?>
                         <div class="input__notification"></div>
                     </label>
                 </div>
@@ -117,11 +123,15 @@ if ($arResult['isFormNote'] != 'Y') {
                     data-error="Ошибка отправки"
                 >
                     <div class="form-button__title">
-                        <?= htmlspecialcharsbx(trim($arResult['arForm']['BUTTON']) == '' ? GetMessage('FORM_ADD') : $arResult['arForm']['BUTTON']); ?>
+                        <?= htmlspecialcharsbx(
+                            trim($arResult['arForm']['BUTTON']) == ''
+                                ? GetMessage('FORM_ADD')
+                                : $arResult['arForm']['BUTTON']
+                        ) ?>
                     </div>
                 </button>
             </div>
         </form>
     </div>
-    <?php
-}
+<?php
+endif;
