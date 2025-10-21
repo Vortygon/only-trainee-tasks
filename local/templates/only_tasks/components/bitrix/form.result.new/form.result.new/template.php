@@ -60,7 +60,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                             '<input',
                                             '<input 
                                                 class="input__input"
-                                            ' . ($arQuestion['REQUIRED'] == 'Y') ? "required=''" : "",
+                                            ' . ($arQuestion['REQUIRED'] == 'Y' ? "required=''" : ""),
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
