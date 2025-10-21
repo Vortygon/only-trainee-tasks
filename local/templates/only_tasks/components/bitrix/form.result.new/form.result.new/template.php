@@ -42,7 +42,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                 </div>
                                 <?php
                                 $requiredFlag = $arQuestion['REQUIRED'] == 'Y' ? "required=''" : "";
-                                $classFlag = isset($arResult['ERRORS'][$FIELD_SID]) ? "class='input__input invalid'" : "class='input__input'";  
+                                $classFlag = isset($arResult['QUESTIONS'][$FIELD_SID]['ERROR']) ? "class='input__input invalid'" : "class='input__input'";  
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
 										echo str_replace(
@@ -59,7 +59,7 @@ if ($arResult['isFormNote'] != 'Y') {
                                     default:
                                         echo str_replace(
                                             '<input',
-                                            '<input' . $classFlag . $requiredFlag,
+                                            '<input ' . $classFlag . $requiredFlag,
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
