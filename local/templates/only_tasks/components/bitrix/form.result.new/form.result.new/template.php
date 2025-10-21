@@ -70,12 +70,13 @@ if ($arResult['isFormNote'] != 'Y') {
                                     <?php 
                                     switch ($FIELD_SID) {
                                         case 'medicine_phone':
+                                            echo GetMessage('PHONE_ERROR');
                                             break;
                                         case 'medicine_email':
-                                            echo "Неверный формат почты";
+                                            echo GetMessage('EMAIL_ERROR');
                                             break;
                                         default:
-                                            echo "Поле должно содержать не менее 3-х символов";
+                                            echo GetMessage('TEXT_ERROR');
                                             break;
                                     } 
                                     ?>
