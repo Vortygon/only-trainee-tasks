@@ -42,8 +42,25 @@ if ($arResult['isFormNote'] != 'Y') {
                                 <?php
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
+                                        str_replace(
+                                            '<input',
+                                            '
+                                                <input 
+                                                    class="input__input" 
+                                                    type="tel" 
+                                                    id="<?= $FIELD_SID ?>" 
+                                                    name="<?= $FIELD_SID ?>" 
+                                                    value=""
+                                                    data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
+                                                    maxlength="12" 
+                                                    x-autocompletetype="phone-full"
+                                                    <?= (intval($arQuestion[\'REQUIRED\'] == \'Y\') ? \'required=""\' : \'\') ?>
+                                                >
+                                            ',
+                                            $arQuestion['HTML_CODE']
+                                        );
                                         ?>
-                                        <input 
+                                        <!-- <input 
                                             class="input__input" 
                                             type="tel" 
                                             id="<?= $FIELD_SID ?>" 
@@ -53,10 +70,24 @@ if ($arResult['isFormNote'] != 'Y') {
                                             maxlength="12" 
                                             x-autocompletetype="phone-full"
                                             <?= (intval($arQuestion['REQUIRED'] == 'Y') ? 'required=""' : '') ?>
-                                        >
+                                        > -->
                                         <?php
                                         break;
                                     default:
+                                        str_replace(
+                                            '<input',
+                                            '
+                                                <input 
+                                                    class="input__input" 
+                                                    type="<?= $arQuestion[\'STRUCTURE\'][0][\'FIELD_TYPE\'] ?>" 
+                                                    id="<?= $FIELD_SID ?>" 
+                                                    name="<?= $FIELD_SID ?>" 
+                                                    value=""
+                                                    <?= (intval($arQuestion[\'REQUIRED\'] == \'Y\') ? \'required=""\' : \'\') ?>
+                                                >
+                                            ',
+                                            $arQuestion['HTML_CODE']
+                                        )
                                         ?>
                                         <input 
                                             class="input__input" 
@@ -84,16 +115,18 @@ if ($arResult['isFormNote'] != 'Y') {
             </div>
             <div class="contact-form__form-message">
                 <div class="input">
-                    <label class="input__label" for="medicine_message">
+                    <label class="input__label">
                         <div class="input__label-text"><?= $arResult['QUESTIONS']['medicine_message']['CAPTION'] ?></div>
-                        <textarea 
-                            class="input__input" 
-                            type="text" 
-                            id="medicine_message" 
-                            name="medicine_message"
-                            value=""
-                        ></textarea>
-                        <div class="input__notification"></div>
+                        <?php
+                        $textareaHtml = $arResult['QUESTIONS']['medicine_message']['HTML_CODE'];
+                        $textareaHtml = str_replace('<textarea', '<textarea class="input__input"', $textareaHtml);
+                        echo $textareaHtml;
+                        ?>
+                        <?php if (isset($arResult['FORM_ERRORS']['medicine_message'])): ?>
+                            <div class="input__notification">
+                                <?= htmlspecialcharsbx($arResult['FORM_ERRORS']['medicine_message']) ?>
+                            </div>
+                        <?php endif; ?>
                     </label>
                 </div>
             </div>
