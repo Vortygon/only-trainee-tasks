@@ -41,26 +41,25 @@ if ($arResult['isFormNote'] != 'Y') {
                                     <?php if ($arQuestion['REQUIRED'] == 'Y'): ?><?= $arResult['REQUIRED_SIGN']; ?><?php endif; ?>
                                 </div>
                                 <?php
+                                $requiredFlag = $arQuestion['REQUIRED'] == 'Y' ? "required=''" : "";
+                                $classFlag = isset($arResult['ERRORS'][$FIELD_SID]) ? "class='input__input invalid'" : "class='input__input'";  
                                 switch ($FIELD_SID) {
                                     case 'medicine_phone':
 										echo str_replace(
                                             '<input',
                                             '<input 
-												class="input__input <?= isset($arResult[\'ERRORS\'][$FIELD_SID]) ? "invalid" : "" ?>" 
 												type="tel" 
 												data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
 												maxlength="12" 
 												x-autocompletetype="phone-full"
-                                                ' . ($arQuestion['REQUIRED'] == 'Y' ? "required=''" : ""),
+                                                ' . $classFlag . $requiredFlag,
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
                                     default:
                                         echo str_replace(
                                             '<input',
-                                            '<input 
-												class="input__input <?= isset($arResult[\'ERRORS\'][$FIELD_SID]) ? "invalid" : "" ?>" 
-                                            ' . ($arQuestion['REQUIRED'] == 'Y' ? "required=''" : ""),
+                                            '<input' . $classFlag . $requiredFlag,
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
