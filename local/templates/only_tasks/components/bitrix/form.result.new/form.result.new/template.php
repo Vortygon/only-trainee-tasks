@@ -38,9 +38,7 @@ if ($arResult['isFormNote'] != 'Y') {
                             <label class="input__label" for="<?= $FIELD_SID ?>">
                                 <div class="input__label-text">
                                     <?= $arQuestion['CAPTION'] ?>
-                                    <?php if ($arQuestion['REQUIRED'] == 'Y'): ?>
-                                        <?= $arResult['REQUIRED_SIGN']; ?>
-                                    <?php endif; ?>
+                                    <?php if ($arQuestion['REQUIRED'] == 'Y'): ?><?= $arResult['REQUIRED_SIGN']; ?><?php endif; ?>
                                 </div>
                                 <?php
                                 switch ($FIELD_SID) {
@@ -53,6 +51,7 @@ if ($arResult['isFormNote'] != 'Y') {
 												data-inputmask="\'mask\': \'+79999999999\', \'clearIncomplete\': \'true\'" 
 												maxlength="12" 
 												x-autocompletetype="phone-full"
+                                                <?php if ($arQuestion[\'REQUIRED\'] == \'Y\'): ?><?= $arResult[\'REQUIRED_SIGN\']; ?><?php endif; ?>
                                         	',
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
@@ -60,7 +59,10 @@ if ($arResult['isFormNote'] != 'Y') {
                                     default:
                                         echo str_replace(
                                             '<input',
-                                            '<input class="input__input"',
+                                            '<input 
+                                                class="input__input"
+                                                <?php if ($arQuestion[\'REQUIRED\'] == \'Y\'): ?><?= $arResult[\'REQUIRED_SIGN\']; ?><?php endif; ?>
+                                            ',
                                             $arResult["QUESTIONS"][$FIELD_SID]['HTML_CODE']
                                         );
                                         break;
