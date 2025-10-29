@@ -1,9 +1,11 @@
-# Задание 2
+# Задание 3
 
-> - ### [ Сертификат прохождения тестов "Администратор. Базовый" ](<readme/Администратор. Базовый.pdf>)
-> - ### [ Сертификат прохождения тестов "Администратор. Модули" ](<readme/Администратор. Модули.pdf>)
+> ### [ Сертификат прохождения тестов "Администратор. Бизнес" ](<readme/Администратор. Бизнес.pdf>)
 
-> ### [Файл шаблона form.result.new - ``local/templates/only_tasks/components/bitrix/form.result.new/form.result.new/template.php`` ](<local/templates/only_tasks/components/bitrix/form.result.new/form.result.new/template.php>)
+> ### [Папка шаблона news - ``local/templates/only_tasks/components/bitrix/news/news`` ](<local/templates/only_tasks/components/bitrix/news/news>)
 
-> ### Скриншот
-> ![](<readme/screenshot_2.png>)
+> ### Скриншоты
+Новость на главной странице
+> ![](<readme/screenshot_3.png>)
+Страница новости
+> ![](<readme/screenshot_4.png>)
