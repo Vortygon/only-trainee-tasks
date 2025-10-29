@@ -6,9 +6,9 @@
 > - ### [Файл шаблона news.detail - ``local/templates/only_tasks/components/bitrix/news/news/bitrix/news.detail/.default/template.php`` ](<local/templates/only_tasks/components/bitrix/news/news/bitrix/news.detail/.default/template.php>)
 
 > ### Скриншоты
-- **Новость на главной странице**
+**Новость на главной странице:**
 > ![](<readme/screenshot_3.png>)
 > ![](<readme/screenshot_4.png>)
 
-- **Страница новости**
+**Страница новости:**
 > ![](<readme/screenshot_5.png>)
