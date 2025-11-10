@@ -375,27 +375,27 @@ class IB_ADD_VACANCIES_20181115102324 extends Version
             foreach ($arProps as $arProp) {
                 $helper->Iblock()->addPropertyIfNotExists($iIBlockID, $arProp);
             }
-            /* $helper->AdminIblock()->buildElementForm($iIBlockID, [ */
-            /*     'Вакантия' => [ */
-            /*         'ACTIVE', */
-            /*         'PROPERTY_DATE', */
-            /*         'PROPERTY_TYPE', */
-            /*         'NAME'=>'Название вакансии', */
-            /*         'PROPERTY_ACTIVITY', */
-            /*         'PROPERTY_SCHEDULE', */
-            /*         'PROPERTY_FIELD', */
-            /*         'PROPERTY_OFFICE', */
-            /*         'PROPERTY_LOCATION', */
-            /*         'PROPERTY_EMAIL', */
-            /*         'PROPERTY_SALARY_TYPE', */
-            /*         'PROPERTY_SALARY_VALUE' */
-            /*     ], */
-            /*     'Описание вакансии' => [ */
-            /*         'PROPERTY_REQUIRE', */
-            /*         'PROPERTY_DUTY', */
-            /*         'PROPERTY_CONDITIONS' */
-            /* ] */
-            /* ]); */
+            // $helper->AdminIblock()->buildElementForm($iIBlockID, [
+            //     'Вакантия' => [
+            //         'ACTIVE',
+            //         'PROPERTY_DATE',
+            //         'PROPERTY_TYPE',
+            //         'NAME'=>'Название вакансии',
+            //         'PROPERTY_ACTIVITY',
+            //         'PROPERTY_SCHEDULE',
+            //         'PROPERTY_FIELD',
+            //         'PROPERTY_OFFICE',
+            //         'PROPERTY_LOCATION',
+            //         'PROPERTY_EMAIL',
+            //         'PROPERTY_SALARY_TYPE',
+            //         'PROPERTY_SALARY_VALUE'
+            //     ],
+            //     'Описание вакансии' => [
+            //         'PROPERTY_REQUIRE',
+            //         'PROPERTY_DUTY',
+            //         'PROPERTY_CONDITIONS'
+            // ]
+            // ]);
         }
 
     }

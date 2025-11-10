@@ -5,7 +5,7 @@ if (!$USER->IsAdmin()) {
 }
 \Bitrix\Main\Loader::includeModule('iblock');
 $row = 1;
-$IBLOCK_ID = 42;
+$IBLOCK_ID = 3;
 
 $el = new CIBlockElement;
 $arProps = [];
