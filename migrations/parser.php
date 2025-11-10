@@ -13,7 +13,7 @@ if (($handle = fopen(CSV_FILE_NAME, "r")) !== false) {
     fgetcsv($handle);
 
     while(($data = fgetcsv($handle)) !== false) {
-        echo implode(", ", $data) . "\n\n";
+        echo implode(", ", $data) . "<br>";
     }
 
     fclose($handle);
