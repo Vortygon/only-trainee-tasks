@@ -1,14 +1,13 @@
-# Задание 3
+# Задание 4
 
-> ### [ Сертификат прохождения тестов "Администратор. Бизнес" ](<readme/Администратор. Бизнес.pdf>)
+> ### [ Сертификат прохождения тестов "Разработчик Bitrix Framework" ](<readme/Разработчик Bitrix Framework.pdf>)
 
-> - ### [Папка шаблона news - ``local/templates/only_tasks/components/bitrix/news/news`` ](<local/templates/only_tasks/components/bitrix/news/news>)
-> - ### [Файл шаблона news.detail - ``local/templates/only_tasks/components/bitrix/news/news/bitrix/news.detail/.default/template.php`` ](<local/templates/only_tasks/components/bitrix/news/news/bitrix/news.detail/.default/template.php>)
+> ### [Файл парсера - ``migrations/parser.php`` ](<migrations/parser.php>)
 
- ### Скриншоты
-**Новость на главной странице:**
-> ![](<readme/screenshot_3.png>)
-> ![](<readme/screenshot_4.png>)
+### Скриншоты
+**Результат работы парсера:**
+> ![](<readme/screenshot_6.png>)
 
-**Страница новости:**
-> ![](<readme/screenshot_5.png>)
+**Подгруженные вакансии**
+> ![](<readme/screenshot_7.png>)
+> ![](<readme/screenshot_8.png>)

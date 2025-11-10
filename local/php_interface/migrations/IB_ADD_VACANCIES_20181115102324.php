@@ -376,7 +376,7 @@ class IB_ADD_VACANCIES_20181115102324 extends Version
                 $helper->Iblock()->addPropertyIfNotExists($iIBlockID, $arProp);
             }
             // $helper->AdminIblock()->buildElementForm($iIBlockID, [
-            //     'Вакантия' => [
+            //     'Вакансия' => [
             //         'ACTIVE',
             //         'PROPERTY_DATE',
             //         'PROPERTY_TYPE',
