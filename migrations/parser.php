@@ -11,6 +11,8 @@ define('CSV_FILE_NAME', 'vacancy.csv');
 define('SIMILARITY_THRESHOLD', 50);
 define('IBLOCK_ID', CIBLock::getList(array(), ['=CODE' => IBLOCK_CODE])->GetNext()['ID']);
 
+$element = new CIBlockElement;
+
 if (IBLOCK_ID === false) {
     echo 'Инфоблок вакансий не найден.';
     exit();
@@ -22,7 +24,6 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
 
     // Пропускаем заголовок таблицы
     fgetcsv($handle);
-
     while(($data = fgetcsv($handle)) !== false) {
         $PROP['ACTIVITY'] = $data[9];
         $PROP['FIELD'] = $data[11];
@@ -41,18 +42,28 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
         foreach ($PROP as $key => &$value) {
             sanitizeValue($value);
         }
-
         foreach (['REQUIRE', 'DUTY', 'CONDITIONS'] as $key) {
             parseListValue($PROP[$key]);
         }
-
         foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE'] as $key) {
             handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
         }
-
         handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
 
-        // echo implode(", ", $PROP) . "<br>";
+        $arLoadProductArray = [
+            "MODIFIED_BY" => $USER->GetID(),
+            "IBLOCK_SECTION_ID" => false,
+            "IBLOCK_ID" => IBLOCK_ID,
+            "PROPERTY_VALUES" => $PROP,
+            "NAME" => $data[3],
+            "ACTIVE" => end($data) ? 'Y' : 'N',
+        ];
+
+        if ($PRODUCT_ID = $element->Add($arLoadProductArray)) {
+            echo "Добавлен элемент с ID : " . $PRODUCT_ID . "<br>";
+        } else {
+            echo "Ошибка: " . $element->LAST_ERROR . '<br>';
+        }
     }
 
     fclose($handle);
@@ -76,6 +87,7 @@ function handleSalaryValue(&$value, &$type) {
     switch ($value) {
         case 'по договоренности':
             $type = 'договорная';
+            // no break
         case '-':
             $value = '';
             break;
@@ -93,8 +105,6 @@ function handleSalaryValue(&$value, &$type) {
 }
 
 function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
-    $properties = $arrayProperties[$key];
-
     if ($key == 'OFFICE') {
         switch ($value = strtolower($value)) {
             case 'центральный офис':
@@ -109,12 +119,13 @@ function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
         }
     }
 
+    $properties = $arrayProperties[$key];
     foreach ($properties as $property) {
         if (stripos($property, $value) !== false) {
             $value = $property;
             break;
         }
-    
+
         if (similar_text($property, $value) > SIMILARITY_THRESHOLD) {
             $value = $property;
         }
@@ -122,13 +133,12 @@ function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
 }
 
 function initPropertiesList() {
-    $arrayProperties = [];
-
     $enumProperties = CIBlockPropertyEnum::GetList(
         ['SORT' => 'ASC', 'VALUE' => 'ASC'],
         ['IBLOCK_ID' => IBLOCK_ID]
     );
-
+    
+    $arrayProperties = [];
     while ($property = $enumProperties->Fetch()) {
         $key = trim($property['VALUE']);
         $arrayProperties[$property['PROPERTY_CODE']][$key] = $property['ID'];
