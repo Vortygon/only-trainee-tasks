@@ -46,7 +46,7 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
             parseListValue($PROP[$key]);
         }
         handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
-        foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE', 'SALARY_TYPE'] as $key) {
+        foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE'] as $key) {
             handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
         }
 
