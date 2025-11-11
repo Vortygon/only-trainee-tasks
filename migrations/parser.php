@@ -9,13 +9,12 @@ if (!$USER->IsAdmin()) {
 define('IBLOCK_CODE', 'VACANCIES');
 define('CSV_FILE_NAME', 'vacancy.csv');
 define('SIMILARITY_THRESHOLD', 50);
-// $IBLOCK_ID = IBlockElementLoader::getIBlockId(IBLOCK_CODE) ?? 3;
+$IBLOCK_ID = IBlockElementLoader::getIBlockId(IBLOCK_CODE);
 
-// if ($IBLOCK_ID === false) {
-//     echo 'Инфоблок вакансий не найден.';
-//     exit();
-// }
-$IBLOCK_ID = 3;
+if ($IBLOCK_ID === false) {
+    echo 'Инфоблок вакансий не найден.';
+    exit();
+}
 
 if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
     clearVacancies();
@@ -47,9 +46,9 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
             parseListValue($PROP[$key]);
         }
 
-        foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE'] as $key) {
-            handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
-        }
+        // foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE'] as $key) {
+        //     handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
+        // }
 
         handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
 
@@ -116,7 +115,7 @@ function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
             break;
         }
     
-        if (similar_text($property, $value) > 50) {
+        if (similar_text($property, $value) > SIMILARITY_THRESHOLD) {
             $value = $property;
         }
     }
