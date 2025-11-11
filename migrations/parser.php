@@ -9,7 +9,8 @@ if (!$USER->IsAdmin()) {
 define('IBLOCK_CODE', 'VACANCIES');
 define('CSV_FILE_NAME', 'vacancy.csv');
 define('SIMILARITY_THRESHOLD', 50);
-$IBLOCK_ID = IBlockElementLoader::getIBlockId(IBLOCK_CODE);
+// $IBLOCK_ID = IBlockElementLoader::getIBlockId(IBLOCK_CODE);
+define('IBLOCK_ID', IBlockElementLoader::getIBlockId(IBLOCK_CODE));
 
 if ($IBLOCK_ID === false) {
     echo 'Инфоблок вакансий не найден.';
@@ -126,7 +127,7 @@ function initPropertiesList() {
 
     $enumProperties = CIBlockPropertyEnum::GetList(
         ['SORT' => 'ASC', 'VALUE' => 'ASC'],
-        ['IBLOCK_ID' => self::$IBLOCK_ID]
+        ['IBLOCK_ID' => IBLOCK_ID]
     );
 
     while ($property = $enumProperties->Fetch()) {
