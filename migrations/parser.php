@@ -9,13 +9,13 @@ if (!$USER->IsAdmin()) {
 define('IBLOCK_CODE', 'VACANCIES');
 define('CSV_FILE_NAME', 'vacancy.csv');
 define('SIMILARITY_THRESHOLD', 50);
-$IBLOCK_ID = IBlockElementLoader::getIBlockId(IBLOCK_CODE) ?? 3;
+// $IBLOCK_ID = IBlockElementLoader::getIBlockId(IBLOCK_CODE) ?? 3;
 
-if ($IBLOCK_ID === false) {
-    echo 'Инфоблок вакансий не найден.';
-    exit();
-}
-
+// if ($IBLOCK_ID === false) {
+//     echo 'Инфоблок вакансий не найден.';
+//     exit();
+// }
+$IBLOCK_ID = 3;
 
 if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
     clearVacancies();
