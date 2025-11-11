@@ -86,7 +86,7 @@ function parseListValue(&$value) {
 function handleSalaryValue(&$value, &$type) {
     switch ($value) {
         case 'по договоренности':
-            $type = 'договорная';
+            $type = 'Договорная';
             // no break
         case '-':
             $value = '';
@@ -94,7 +94,7 @@ function handleSalaryValue(&$value, &$type) {
         default:
             $salary = explode(' ', $value);
             if ($salary[0] == 'от' || $salary[0] == 'до') {
-                $type = $salary[0];
+                $type = strtoupper($salary[0]);
                 array_splice($salary, 0, 1);
                 $value = implode(' ', $salary);
             } else {
