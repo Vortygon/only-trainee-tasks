@@ -105,10 +105,10 @@ if (($handle = fopen("vacancy.csv", "r")) !== false) {
             $PROP['SALARY_VALUE'] = '';
         } elseif ($PROP['SALARY_VALUE'] == 'по договоренности') {
             $PROP['SALARY_VALUE'] = '';
-            $PROP['SALARY_TYPE'] = $arProps['SALARY_TYPE']['договорная'];
+            $PROP['SALARY_TYPE'] = $arProps['SALARY_TYPE']['Договорная'];
         } else {
             $arSalary = explode(' ', $PROP['SALARY_VALUE']);
-            if ($arSalary[0] == 'от' || $arSalary[0] == 'до') {
+            if ($arSalary[0] == 'ОТ' || $arSalary[0] == 'ДО') {
                 $PROP['SALARY_TYPE'] = $arProps['SALARY_TYPE'][$arSalary[0]];
                 array_splice($arSalary, 0, 1);
                 $PROP['SALARY_VALUE'] = implode(' ', $arSalary);
