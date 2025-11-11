@@ -131,16 +131,14 @@ function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
     foreach ($properties as $propKey => $propValue) {
         if (stripos($propKey, $value) !== false) {
             $value = $propValue;
-            return;
+            break;
         }
 
         if (similar_text($propKey, $value) > SIMILARITY_THRESHOLD) {
             $value = $propValue;
-            return;
+            break;
         }
     }
-
-    $properties[$value] = $value;
 }
 
 function initPropertiesList() {
