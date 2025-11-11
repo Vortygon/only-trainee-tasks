@@ -16,6 +16,7 @@ if ($IBLOCK_ID === false) {
     exit();
 }
 
+try {
 if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
     clearVacancies();
     $arrayProperties = initPropertiesList();
@@ -46,9 +47,9 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
             parseListValue($PROP[$key]);
         }
 
-        // foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE'] as $key) {
-        //     handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
-        // }
+        foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE'] as $key) {
+            handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
+        }
 
         handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
 
@@ -56,6 +57,9 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
     }
 
     fclose($handle);
+}
+} catch (Exception $err) {
+    echo $err->getMessage();
 }
 
 function sanitizeValue(&$value) {
