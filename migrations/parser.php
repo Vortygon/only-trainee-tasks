@@ -45,10 +45,10 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
         foreach (['REQUIRE', 'DUTY', 'CONDITIONS'] as $key) {
             parseListValue($PROP[$key]);
         }
+        handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
         foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE', 'SALARY_TYPE'] as $key) {
             handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
         }
-        handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
 
         $arLoadProductArray = [
             "MODIFIED_BY" => $USER->GetID(),
