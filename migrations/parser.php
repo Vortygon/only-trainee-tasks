@@ -11,12 +11,12 @@ define('CSV_FILE_NAME', 'vacancy.csv');
 define('SIMILARITY_THRESHOLD', 50);
 define('IBLOCK_ID', CIBLock::getList(array(), ['=CODE' => IBLOCK_CODE])->GetNext()['ID']);
 
-$element = new CIBlockElement;
-
 if (IBLOCK_ID === false) {
     echo 'Инфоблок вакансий не найден.';
     exit();
 }
+
+$element = new CIBlockElement;
 
 if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
     clearVacancies();
@@ -39,13 +39,13 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
         $PROP['SALARY_VALUE'] = $data[7];
         $PROP['SCHEDULE'] = $data[10];
 
+        handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
         foreach ($PROP as $key => &$value) {
             sanitizeValue($value);
         }
         foreach (['REQUIRE', 'DUTY', 'CONDITIONS'] as $key) {
             parseListValue($PROP[$key]);
         }
-        handleSalaryValue($PROP['SALARY_VALUE'], $PROP['SALARY_TYPE']);
         foreach (['ACTIVITY', 'FIELD', 'OFFICE', 'LOCATION', 'TYPE', 'SCHEDULE', 'SALARY_TYPE'] as $key) {
             handleDictionaryValue($key, $PROP[$key], $arrayProperties, $data[3]);
         }
@@ -65,7 +65,6 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
             echo "Ошибка: " . $element->LAST_ERROR . '<br>';
         }
     }
-
     fclose($handle);
 }
 
@@ -93,20 +92,12 @@ function handleSalaryValue(&$value, &$type) {
             break;
         default:
             $salary = explode(' ', $value);
-            switch ($salary[0]) {
-                case 'от':
-                    $type = 'ОТ';
-                    array_splice($salary, 0, 1);
-                    $value = implode(' ', $salary);
-                    break;
-                case 'до':
-                    $type = 'ДО';
-                    array_splice($salary, 0, 1);
-                    $value = implode(' ', $salary);
-                    break;
-                default:
-                    $type = '=';
-                    break;
+            if ($salary[0] == 'от' || $salary == 'до') {
+                $type = $salary[0] == 'от' ? 'ОТ' : 'ДО';
+                array_splice($salary, 0, 1);
+                $value = implode(' ', $salary);
+            } else {
+                $type = '=';
             }
             break;
     }
@@ -118,7 +109,7 @@ function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
             case 'центральный офис':
                 $value .= 'свеза ' . $name;
                 break;
-            case 'лусозагатовка':
+            case 'лесозагатовка':
                 $value = 'свеза ресурс' . $value;
                 break;
             case 'свеза тюмень':
