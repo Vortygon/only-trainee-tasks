@@ -16,7 +16,6 @@ if ($IBLOCK_ID === false) {
     exit();
 }
 
-try {
 if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
     clearVacancies();
     $arrayProperties = initPropertiesList();
@@ -57,9 +56,6 @@ if (($handle = fopen(CSV_FILE_NAME, 'r')) !== false) {
     }
 
     fclose($handle);
-}
-} catch (Exception $err) {
-    echo $err->getMessage();
 }
 
 function sanitizeValue(&$value) {
@@ -123,44 +119,6 @@ function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
             $value = $property;
         }
     }
-
-
-    // foreach ($PROP as $key => &$value) {
-    //     if (stripos($value, '•') !== false) {
-    //         $value = explode('•', $value);
-    //         array_splice($value, 0, 1);
-    //         foreach ($value as &$str) {
-    //             $str = trim($str);
-    //         }
-    //     } elseif ($arProps[$key]) {
-    //         $arSimilar = [];
-    //         foreach ($arProps[$key] as $propKey => $propVal) {
-    //             if ($key == 'OFFICE') {
-    //                 $value = strtolower($value);
-    //                 if ($value == 'центральный офис') {
-    //                     $value .= 'свеза ' . $data[2];
-    //                 } elseif ($value == 'лесозаготовка') {
-    //                     $value = 'свеза ресурс ' . $value;
-    //                 } elseif ($value == 'свеза тюмень') {
-    //                     $value = 'свеза тюмени';
-    //                 }
-    //                 $arSimilar[similar_text($value, $propKey)] = $propVal;
-    //             }
-    //             if (stripos($propKey, $value) !== false) {
-    //                 $value = $propVal;
-    //                 break;
-    //             }
-
-    //             if (similar_text($propKey, $value) > 50) {
-    //                 $value = $propVal;
-    //             }
-    //         }
-    //         if ($key == 'OFFICE' && !is_numeric($value)) {
-    //             ksort($arSimilar);
-    //             $value = array_pop($arSimilar);
-    //         }
-    //     }
-    // }
 }
 
 function initPropertiesList() {
