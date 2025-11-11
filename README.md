@@ -1,13 +1,13 @@
 # Задание 4
 
-> ### [ Сертификат прохождения тестов "Разработчик Bitrix Framework" ](<readme/Разработчик Bitrix Framework.pdf>)
+> ### [ Сертификат прохождения тестов "Разработчик Bitrix Framework" ](<readme/task_4/Разработчик Bitrix Framework.pdf>)
 
 > ### [Файл парсера - ``migrations/parser.php`` ](<migrations/parser.php>)
 
 ### Скриншоты
 **Результат работы парсера:**
-> ![](<readme/screenshot_6.png>)
+> ![](<readme/task_4/1.png>)
 
 **Подгруженные вакансии**
-> ![](<readme/screenshot_7.png>)
-> ![](<readme/screenshot_8.png>)
+> ![](<readme/task_4/2.png>)
+> ![](<readme/task_4/3.png>)
