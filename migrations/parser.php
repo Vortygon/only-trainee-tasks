@@ -9,8 +9,9 @@ if (!$USER->IsAdmin()) {
 define('IBLOCK_CODE', 'VACANCIES');
 define('CSV_FILE_NAME', 'vacancy.csv');
 define('SIMILARITY_THRESHOLD', 50);
+define('IBLOCK_ID', CIBLock::getList(array(), ['=CODE' => IBLOCK_CODE])->GetNext()['ID']);
 
-if ($IBLOCK_ID === false) {
+if (IBLOCK_ID === false) {
     echo 'Инфоблок вакансий не найден.';
     exit();
 }
@@ -123,15 +124,9 @@ function handleDictionaryValue(&$key, &$value, &$arrayProperties, $name) {
 function initPropertiesList() {
     $arrayProperties = [];
 
-    $IBLOCK_ID = false;
-    $rsIBlock = CIBLock::getList(array(), ['=CODE' => IBLOCK_CODE]);
-    if ($iblock = $rsIBlock->GetNext()) {
-        $IBLOCK_ID = $iblock['ID'];
-    } 
-
     $enumProperties = CIBlockPropertyEnum::GetList(
         ['SORT' => 'ASC', 'VALUE' => 'ASC'],
-        ['IBLOCK_ID' => $IBLOCK_ID]
+        ['IBLOCK_ID' => IBLOCK_ID]
     );
 
     while ($property = $enumProperties->Fetch()) {
@@ -145,7 +140,7 @@ function initPropertiesList() {
 function clearVacancies() {
     $items = CIBlockElement::GetList(
         [],
-        ['IBLOCK_ID' => VACANCY_IBLOCK_ID],
+        ['IBLOCK_ID' => IBLOCK_ID],
         false,
         false,
         ['ID']
