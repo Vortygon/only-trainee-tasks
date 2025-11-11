@@ -93,12 +93,20 @@ function handleSalaryValue(&$value, &$type) {
             break;
         default:
             $salary = explode(' ', $value);
-            if ($salary[0] == 'от' || $salary[0] == 'до') {
-                $type = strtoupper($salary[0]);
-                array_splice($salary, 0, 1);
-                $value = implode(' ', $salary);
-            } else {
-                $type = '=';
+            switch ($salary[0]) {
+                case 'от':
+                    $type = 'ОТ';
+                    array_splice($salary, 0, 1);
+                    $value = implode(' ', $salary);
+                    break;
+                case 'до':
+                    $type = 'ДО';
+                    array_splice($salary, 0, 1);
+                    $value = implode(' ', $salary);
+                    break;
+                default:
+                    $type = '=';
+                    break;
             }
             break;
     }
