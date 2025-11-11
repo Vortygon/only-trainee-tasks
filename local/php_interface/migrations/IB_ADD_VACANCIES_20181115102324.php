@@ -291,6 +291,10 @@ class IB_ADD_VACANCIES_20181115102324 extends Version
                     [
                         'XML_ID' => 'SALES',
                         'VALUE' => 'Продажи'
+                    ],
+                    [
+                        'XML_ID' => 'RSS',
+                        'VALUE' => 'РСС'
                     ]
                 ]
             ),
@@ -361,7 +365,15 @@ class IB_ADD_VACANCIES_20181115102324 extends Version
                     [
                         'XML_ID' => 'POLN',
                         'VALUE' => 'Полный день'
-                    ]
+                    ],
+                    [
+                        'XML_ID' => 'GIBK',
+                        'VALUE' => 'Гибкий график'
+                    ],
+                    [
+                        'XML_ID' => 'VAHT',
+                        'VALUE' => 'Вахтовый метод'
+                    ],
                 ]
             ),
             array(
