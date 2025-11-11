@@ -7,6 +7,10 @@ class Version20150520000001 extends Version
 
     protected $description = "Добавляем инфоблок новости";
 
+    /**
+     * @throws Exceptions\HelperException
+     * @return bool|void
+     */
     public function up()
     {
         $helper = $this->getHelperManager();
@@ -30,6 +34,7 @@ class Version20150520000001 extends Version
         $iblockId1 = $helper->Iblock()->saveIblock([
             'NAME' => 'Новости',
             'CODE' => 'content_news',
+            'LID' => ['s1'],
             'IBLOCK_TYPE_ID' => 'content',
             'LIST_PAGE_URL' => '',
             'DETAIL_PAGE_URL' => '#SITE_DIR#/news/#ELEMENT_ID#',
@@ -53,6 +58,10 @@ class Version20150520000001 extends Version
 
     }
 
+    /**
+     * @throws Exceptions\HelperException
+     * @return bool|void
+     */
     public function down()
     {
         $helper = $this->getHelperManager();

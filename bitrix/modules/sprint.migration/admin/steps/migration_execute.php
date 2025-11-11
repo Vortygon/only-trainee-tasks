@@ -1,5 +1,8 @@
 <?php
 
+use Sprint\Migration\Enum\VersionEnum;
+use Sprint\Migration\Locale;
+use Sprint\Migration\Out;
 use Sprint\Migration\VersionConfig;
 use Sprint\Migration\VersionManager;
 
@@ -7,113 +10,128 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["step_code"] == "migration_execute" && check_bitrix_sessid('send_sessid')) {
-    /** @noinspection PhpIncludeInspection */
-    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
-
+if ($_POST["step_code"] == "migration_execute" && check_bitrix_sessid()) {
     /** @var $versionConfig VersionConfig */
     $versionManager = new VersionManager($versionConfig);
 
     $params = !empty($_POST['params']) ? $_POST['params'] : [];
     $restart = !empty($_POST['restart']) ? 1 : 0;
-    $version = isset($_POST['version']) ? $_POST['version'] : 0;
-    $action = !empty($_POST['action']) ? $_POST['action'] : 0;
-    $nextAction = !empty($_POST['next_action']) ? $_POST['next_action'] : 0;
-    $skipVersions = !empty($_POST['skip_versions']) ? $_POST['skip_versions'] : [];
+    $versionName = !empty($_POST['version']) ? $_POST['version'] : '';
+    $action = !empty($_POST['action']) ? $_POST['action'] : '';
+    $nextAction = !empty($_POST['next_action']) ? $_POST['next_action'] : '';
+    $settag = !empty($_POST['settag']) ? trim($_POST['settag']) : '';
     $search = !empty($_POST['search']) ? trim($_POST['search']) : '';
-    $search = Sprint\Migration\Locale::convertToUtf8IfNeed($search);
-    $addtag = !empty($_POST['addtag']) ? trim($_POST['addtag']) : '';
+    $migrationView = !empty($_POST['migration_view']) ? trim($_POST['migration_view']) : '';
 
-    if (!$version) {
-        if ($nextAction == 'up' || $nextAction == 'down') {
+    $filter = [
+        'search'   => $search,
+        'tag'      => '',
+        'modified' => '',
+        'older'    => '',
+        'actual'   => '',
+    ];
 
-            $version = 0;
+    if ($migrationView == 'migration_view_tag') {
+        $filter['tag'] = $search;
+        $filter['search'] = '';
+    } elseif ($migrationView == 'migration_view_modified') {
+        $filter['modified'] = 1;
+    } elseif ($migrationView == 'migration_view_older') {
+        $filter['older'] = 1;
+    }
+
+    if (!$versionName) {
+        if ($nextAction == VersionEnum::ACTION_UP || $nextAction == VersionEnum::ACTION_DOWN) {
             $action = $nextAction;
-
-            $items = $versionManager->getVersions([
-                'status' => ($action == 'up') ? 'new' : 'installed',
-                'search' => $search,
-            ]);
-
-            foreach ($items as $aItem) {
-                if (!in_array($aItem['version'], $skipVersions)) {
-                    $version = $aItem['version'];
-                    break;
-                }
-            }
-
+            $versionName = $versionManager->getOnceForExecute($filter, $action);
         }
     }
 
-    if ($version && $action) {
-
+    if ($versionName && $action) {
         if (!$restart) {
-            Sprint\Migration\Out::out('[%s]%s (%s) start[/]', $action, $version, $action);
+            Out::out('[%s]%s (%s) start[/]', $action, $versionName, $action);
         }
 
-        $success = $versionManager->startMigration($version, $action, $params, false, $addtag);
-        $restart = $versionManager->needRestart($version);
+        $success = $versionManager->startMigration(
+            $versionName,
+            $action,
+            $params,
+            $settag
+        );
+
+        $restart = ($success) ? $versionManager->needRestart() : $restart;
 
         if ($success && !$restart) {
-            Sprint\Migration\Out::out('%s (%s) success', $version, $action);
-        }
+            Out::out('%s (%s) success', $versionName, $action);
 
-        if (!$success && !$restart) {
-            Sprint\Migration\Out::outError(
-                '%s (%s) error: %s',
-                $version,
-                $action,
-                $versionManager->getLastException()->getMessage()
-            );
+            if ($nextAction) {
+                $json = json_encode([
+                    'next_action'    => $nextAction,
+                    'settag'         => $settag,
+                    'search'         => $search,
+                    'migration_view' => $migrationView,
+                ]);
 
-            if ($versionConfig->getVal('stop_on_errors')) {
-                $nextAction = false;
+                ?>
+                <script>
+                    migrationListRefresh(function () {
+                        migrationExecuteStep('migration_execute', <?=$json?>);
+                    });
+                </script><?php
             } else {
-                $skipVersions[] = $version;
+                ?>
+                <script>
+                    migrationListRefresh();
+                </script><?php
             }
         }
 
-        if ($restart) {
+        if ($success && $restart) {
             $json = json_encode([
-                'params' => $versionManager->getRestartParams($version),
-                'action' => $action,
-                'version' => $version,
-                'next_action' => $nextAction,
-                'restart' => 1,
-                'search' => $search,
+                'params'         => $versionManager->getRestartParams(),
+                'action'         => $action,
+                'version'        => $versionName,
+                'next_action'    => $nextAction,
+                'restart'        => 1,
+                'search'         => $search,
+                'migration_view' => $migrationView,
+                'settag'         => $settag,
             ]);
 
             ?>
-            <script>migrationExecuteStep('migration_execute', <?=$json?>);</script><?
-        } elseif ($nextAction) {
-            $json = json_encode([
-                'next_action' => $nextAction,
-                'skip_versions' => $skipVersions,
-                'search' => $search,
-                'addtag' => $addtag,
-            ]);
+            <script>migrationExecuteStep('migration_execute', <?=$json?>);</script><?php
+        }
 
+        if (!$success) {
+            Out::outException($versionManager->getLastException());
+
+            $json = json_encode([
+                'params'         => $params,
+                'action'         => $action,
+                'version'        => $versionName,
+                'next_action'    => $nextAction,
+                'restart'        => 1,
+                'search'         => $search,
+                'migration_view' => $migrationView,
+                'settag'         => $settag,
+            ]);
             ?>
             <script>
-                migrationMigrationRefresh(function () {
-                    migrationExecuteStep('migration_execute', <?=$json?>);
-                });
-            </script><?
-        } else {
-            ?>
-            <script>
-                migrationMigrationRefresh();
-            </script><?
+                (function () {
+                    let $btn = jQuery('<input type="button" value="<?= Locale::getMessage('RESTART_AGAIN') ?>">');
+                    $btn.bind('click', function () {
+                        migrationExecuteStep('migration_execute', <?=$json?>);
+                    })
+                    jQuery('#migration_actions').html($btn);
+                })();
+
+                migrationEnableButtons(1);
+            </script><?php
         }
     } else {
         ?>
         <script>
-            migrationMigrationRefresh();
-        </script><?
+            migrationListRefresh();
+        </script><?php
     }
-
-    /** @noinspection PhpIncludeInspection */
-    require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
-    die();
 }

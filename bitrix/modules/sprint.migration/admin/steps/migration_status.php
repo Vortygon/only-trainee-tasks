@@ -1,6 +1,7 @@
 <?php
 
-use Sprint\Migration\Module;
+use Sprint\Migration\Enum\VersionEnum;
+use Sprint\Migration\Locale;
 use Sprint\Migration\VersionConfig;
 use Sprint\Migration\VersionManager;
 
@@ -8,51 +9,45 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["step_code"] == "migration_status" && check_bitrix_sessid('send_sessid')) {
-    /** @noinspection PhpIncludeInspection */
-    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
-
+if ($_POST["step_code"] == "migration_view_status" && check_bitrix_sessid()) {
     /** @var $versionConfig VersionConfig */
     $versionManager = new VersionManager($versionConfig);
 
     $search = !empty($_POST['search']) ? trim($_POST['search']) : '';
-    $search = Sprint\Migration\Locale::convertToUtf8IfNeed($search);
 
-    $versions = $versionManager->getVersions([
-        'status' => '',
-        'search' => $search,
-    ]);
+    $versions = $versionManager->getVersions(
+        [
+            'search' => $search,
+        ]
+    );
 
     $status = [
-        'new' => 0,
-        'installed' => 0,
-        'unknown' => 0,
+        VersionEnum::STATUS_NEW       => 0,
+        VersionEnum::STATUS_INSTALLED => 0,
+        VersionEnum::STATUS_UNKNOWN   => 0,
     ];
 
-    foreach ($versions as $aItem) {
-        $key = $aItem['status'];
+    foreach ($versions as $item) {
+        $key = $item['status'];
         $status[$key]++;
     }
 
-
     ?>
-    <table class="sp-status">
-        <? foreach ($status as $code => $cnt): $ucode = strtoupper($code); ?>
+    <table class="sp-summary">
+        <?php foreach ($status as $code => $cnt) {
+            $ucode = strtoupper($code); ?>
             <tr>
-                <td class="sp-status-l">
+                <td class="sp-summary-l">
                 <span class="sp-item-<?= $code ?>">
-                    <?= GetMessage('SPRINT_MIGRATION_' . $ucode) ?>
+                    <?= Locale::getMessage($ucode) ?>
                 </span>
-                    <?= GetMessage('SPRINT_MIGRATION_DESC_' . $ucode) ?>
+                    <?= Locale::getMessage('DESC_' . $ucode) ?>
                 </td>
-                <td class="sp-status-r">
+                <td class="sp-summary-r">
                     <?= $cnt ?>
                 </td>
             </tr>
-        <? endforeach ?>
+        <?php } ?>
     </table>
-    <?
-    /** @noinspection PhpIncludeInspection */
-    require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
-    die();
+    <?php
 }

@@ -2,199 +2,106 @@
 
 namespace Sprint\Migration;
 
+use ReflectionClass;
 use Sprint\Migration\Exceptions\MigrationException;
-use Sprint\Migration\Exceptions\RestartException;
+use Sprint\Migration\Exchange\ExchangeManager;
+use Sprint\Migration\Interfaces\RestartableInterface;
+use Sprint\Migration\Traits\HelperManagerTrait;
+use Sprint\Migration\Traits\OutTrait;
+use Sprint\Migration\Traits\RestartableTrait;
+use Sprint\Migration\Traits\VersionConfigTrait;
 
-/**
- * Class Version
- * @package Sprint\Migration
- */
-class Version
+class Version implements RestartableInterface
 {
+    use HelperManagerTrait;
+    use OutTrait;
+    use RestartableTrait;
+    use VersionConfigTrait;
 
-    use OutTrait {
-        out as protected;
-        outIf as protected;
-        outProgress as protected;
-        outNotice as protected;
-        outNoticeIf as protected;
-        outInfo as protected;
-        outInfoIf as protected;
-        outSuccess as protected;
-        outSuccessIf as protected;
-        outWarning as protected;
-        outWarningIf as protected;
-        outError as protected;
-        outErrorIf as protected;
-        outDiff as protected;
-        outDiffIf as protected;
-    }
-
+    protected $author        = "";
+    protected $description   = "";
+    protected $moduleVersion = "";
     /**
-     * @var string
+     * @deprecated Используете $this->checkRequiredVersions(['Version1','Version1'])
      */
-    protected $description = "";
+    protected $requiredVersions = [];
 
     /**
-     * @var array
-     */
-    protected $versionFilter = [];
-
-    /**
-     * @var array
-     */
-    protected $params = [];
-
-    /**
-     * @var string
-     */
-    protected $storageName = 'default';
-
-    /**
-     * @var HelperManager
-     */
-    private $helperManager;
-
-    /**
-     * your code for up
-     * @return bool
+     * @throws MigrationException
      */
     public function up()
     {
-        return true;
+        throw new MigrationException(Locale::getMessage('WRITE_UP_CODE'));
     }
 
     /**
-     * your code for down
-     * @return bool
+     * @throws MigrationException
      */
     public function down()
     {
-        return true;
+        throw new MigrationException(Locale::getMessage('WRITE_DOWN_CODE'));
     }
 
-    /**
-     * @return bool
-     */
-    public function isVersionEnabled()
-    {
-        return true;
-    }
-
-    /**
-     * @return string
-     */
-    public function getVersionName()
-    {
-        $path = explode('\\', get_class($this));
-        return array_pop($path);
-    }
-
-    /**
-     * @return string
-     */
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    /**
-     * @return array
-     */
-    public function getVersionFilter()
+    public function getAuthor(): string
     {
-        return $this->versionFilter;
+        return $this->author;
+    }
+
+    public function getModuleVersion(): string
+    {
+        return $this->moduleVersion;
     }
 
     /**
-     * @param $name
-     * @param $data
+     * @deprecated
      */
-    public function saveData($name, $data)
+    public function getRequiredVersions(): array
     {
-        $storage = new StorageManager($this->storageName);
-        $storage->saveData($this->getVersionName(), $name, $data);
+        return $this->requiredVersions;
+    }
+
+    public function getVersionName(): string
+    {
+        return (new ReflectionClass($this))->getShortName();
     }
 
     /**
-     * @param $name
-     * @return mixed|string
-     */
-    public function getSavedData($name)
-    {
-        $storage = new StorageManager($this->storageName);
-        return $storage->getSavedData($this->getVersionName(), $name);
-    }
-
-    /**
-     * @param bool $name
-     */
-    public function deleteSavedData($name = false)
-    {
-        $storage = new StorageManager($this->storageName);
-        $storage->deleteSavedData($this->getVersionName(), $name);
-    }
-
-    /**
-     * @throws RestartException
-     */
-    public function restart()
-    {
-        Throw new RestartException();
-    }
-
-    /**
-     * Need For Sprint\Migration\VersionManager
-     * @return array
-     */
-    public function getParams()
-    {
-        return $this->params;
-    }
-
-    /**
-     * Need For Sprint\Migration\VersionManager
-     * @param array $params
-     */
-    public function setParams($params = [])
-    {
-        $this->params = $params;
-    }
-
-    /**
-     * @param $cond
-     * @param $msg
+     * Метод проверяет установлены ли обязательные миграции и бросает исключение если нет
+     * $versionNames = ['Version1','Version1'] или [Version1::class,Version2::class]
+     *
      * @throws MigrationException
      */
-    public function exitIf($cond, $msg)
+    public function checkRequiredVersions($versionNames): void
     {
-        if ($cond) {
-            Throw new MigrationException($msg);
-        }
+        (new VersionManager(
+            $this->getVersionConfig()
+        ))->checkRequiredVersions($versionNames);
     }
 
     /**
-     * @param $var
-     * @param $msg
      * @throws MigrationException
      */
-    public function exitIfEmpty($var, $msg)
+    protected function getStorageManager($versionName = ''): StorageManager
     {
-        if (empty($var)) {
-            Throw new MigrationException($msg);
+        if (empty($versionName)) {
+            $versionName = $this->getVersionName();
         }
+
+        return new StorageManager('sprint_storage_default', $versionName);
     }
 
-    /**
-     * @return HelperManager
-     */
-    protected function getHelperManager()
+    protected function getExchangeManager(): ExchangeManager
     {
-        if (is_null($this->helperManager)) {
-            $this->helperManager = new HelperManager();
-        }
+        $dir = $this->getVersionConfig()->getVersionExchangeDir(
+            $this->getVersionName()
+        );
 
-        return ($this->helperManager);
+        return new ExchangeManager($this, $dir);
     }
 }
 

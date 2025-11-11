@@ -2,93 +2,217 @@
 
 namespace Sprint\Migration\Tables;
 
-use Bitrix\Main\Application;
-use Bitrix\Main\DB\Result;
-use Bitrix\Main\DB\SqlQueryException;
-use Sprint\Migration\Locale;
+use Bitrix\Main\ORM\Data\AddResult;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\DeleteResult;
+use Bitrix\Main\ORM\Data\UpdateResult;
+use Bitrix\Main\ORM\Entity;
+use Exception;
+use Sprint\Migration\Exceptions\HelperException;
+use Sprint\Migration\Exceptions\MigrationException;
+use Sprint\Migration\HelperManager;
 use Sprint\Migration\Module;
 
 abstract class AbstractTable
 {
-    private $tableName = '';
+    protected int  $tableVersion = 1;
+    private string $tableName;
+    private string $entityName;
+    private Entity $entity;
 
-    private $dbName = '';
-
-    protected $tableVersion = 1;
-
-    protected $connection;
-
-    abstract protected function createTable();
-
-    abstract protected function dropTable();
-
-    public function __construct($tableName)
+    /**
+     * @throws MigrationException
+     */
+    public function __construct(string $tableName)
     {
-        $this->connection = Application::getConnection();
+        try {
+            $this->entityName = $this->makeEntityName($tableName);
+            $this->tableName = $tableName;
 
-        $this->tableName = $tableName;
-        $this->dbName = $this->connection->getDatabase();
+            $className = __NAMESPACE__ . '\\' . $this->entityName;
 
-        $uid = $this->getUid();
-        if (!Module::getDbOption($uid)) {
-            $this->createTable();
-            Module::setDbOption($uid, 1);
+            if (Entity::has($className)) {
+                $this->entity = Entity::getInstance($className);
+            } else {
+                $this->entity = Entity::compileEntity(
+                    $this->entityName,
+                    $this->getMap(),
+                    [
+                        'table_name' => $tableName,
+                        'namespace'  => __NAMESPACE__,
+                    ]
+                );
+            }
+        } catch (Exception $e) {
+            throw new MigrationException($e->getMessage(), $e->getCode(), $e);
         }
 
+        $this->createTable();
     }
 
-    public function deleteTable()
-    {
-        $this->dropTable();
+    abstract public function getMap(): array;
 
-        Module::removeDbOption($this->getUid());
-    }
-
-    private function getUid()
+    /**
+     * @throws MigrationException
+     */
+    public function createTable(): void
     {
-        return 'upgrade' . $this->tableVersion . '_' . md5($this->tableName);
+        $version = (int)Module::getDbOption($this->entityName);
+        if ($version !== $this->tableVersion) {
+            try {
+                $this->createDbTable();
+            } catch (HelperException $e) {
+                throw new MigrationException($e->getMessage(), $e->getCode(), $e);
+            }
+
+            Module::setDbOption($this->entityName, $this->tableVersion);
+        }
     }
 
     /**
-     * @param $query
-     * @param null $var1
-     * @param null $var2
-     * @throws SqlQueryException
-     * @return Result|bool
+     * @throws HelperException
      */
-    protected function query($query, $var1 = null, $var2 = null)
+    protected function createDbTable(): void
     {
-        if (func_num_args() > 1) {
-            $params = func_get_args();
-            $query = call_user_func_array('sprintf', $params);
-        }
+        $helper = HelperManager::getInstance();
 
-        $search = [
-            '#TABLE1#' => $this->tableName,
-            '#DBNAME#' => $this->dbName,
-        ];
+        $tableName = $this->getTableName();
 
-        if (Locale::isWin1251()) {
-            $search['#CHARSET#'] = 'cp1251';
-            $search['#COLLATE#'] = 'cp1251_general_ci';
+        if ($helper->Sql()->hasTable($tableName)) {
+            $helper->Sql()->restoreColumns($this->entity);
         } else {
-            $search['#CHARSET#'] = 'utf8';
-            $search['#COLLATE#'] = 'utf8_general_ci';
+            $helper->Sql()->createTable($this->entity);
+        }
+    }
+
+    public function getTableName(): string
+    {
+        return $this->tableName;
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    public function dropTable(): void
+    {
+        try {
+            $this->dropDbTable();
+        } catch (HelperException $e) {
+            throw new MigrationException($e->getMessage(), $e->getCode(), $e);
         }
 
-        $querySearch = array_keys($search);
-        $queryReplace = array_values($search);
-
-        $query = str_replace($querySearch, $queryReplace, $query);
-
-        return $this->connection->query($query);
+        Module::removeDbOption($this->entityName);
     }
 
-    protected function forSql($query)
+    /**
+     * @throws HelperException
+     */
+    protected function dropDbTable(): void
     {
-        return $this->connection->getSqlHelper()->forSql($query);
+        $helper = HelperManager::getInstance();
+
+        $tableName = $this->getTableName();
+
+        if ($helper->Sql()->hasTable($tableName)) {
+            $helper->Sql()->dropTable($tableName);
+        }
     }
 
+    /**
+     * @throws MigrationException
+     */
+    protected function getOnce(array $filter = []): ?array
+    {
+        try {
+            $res = $this->getDataManager()::getList(['filter' => $filter, 'limit' => 1]);
+
+            $res->addFetchDataModifier(fn($item) => $this->fetchDataModifier($item));
+
+            $row = $res->fetch();
+
+            return is_array($row) ? $row : null;
+        } catch (Exception $e) {
+            throw new MigrationException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    protected function getAll(array $filter = []): array
+    {
+        try {
+            $res = $this->getDataManager()::getList(['filter' => $filter]);
+
+            $res->addFetchDataModifier(fn($item) => $this->fetchDataModifier($item));
+
+            return $res->fetchAll();
+        } catch (Exception $e) {
+            throw new MigrationException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    private function fetchDataModifier(array $item): array
+    {
+        $result = [];
+        foreach ($item as $key => $val) {
+            $result[strtolower($key)] = $val;
+        }
+        return $result;
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    protected function add(array $data): AddResult
+    {
+        try {
+            return $this->getDataManager()::add($data);
+        } catch (Exception $e) {
+            throw new MigrationException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    protected function update($primary, array $data): UpdateResult
+    {
+        try {
+            return $this->getDataManager()::update($primary, $data);
+        } catch (Exception $e) {
+            throw new MigrationException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    protected function delete($primary): DeleteResult
+    {
+        try {
+            return $this->getDataManager()::delete($primary);
+        } catch (Exception $e) {
+            throw new MigrationException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * @return DataManager|string
+     */
+    private function getDataManager(): DataManager|string
+    {
+        return $this->entity->getDataClass();
+    }
+
+    private function makeEntityName(string $tableName): string
+    {
+        $arr = explode('_', $tableName);
+
+        $arr = array_map('ucfirst', $arr);
+
+        return implode('', $arr);
+    }
 }
 
 

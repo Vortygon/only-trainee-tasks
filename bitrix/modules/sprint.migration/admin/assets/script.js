@@ -1,5 +1,5 @@
 function migrationMigrationsUpConfirm() {
-    if (confirm('Confirm action')) {
+    if (confirm('Confirm install migrations')) {
         migrationExecuteStep('migration_execute', {
             'next_action': 'up'
         });
@@ -7,30 +7,87 @@ function migrationMigrationsUpConfirm() {
 }
 
 function migrationMigrationsDownConfirm() {
-    if (confirm('Confirm action')) {
+    if (confirm('Confirm rollback migrations')) {
         migrationExecuteStep('migration_execute', {
             'next_action': 'down'
         });
     }
 }
 
-function migrationOutLog(result) {
-    var $el = $('#migration_progress');
-    var lastOutElem = $el.children('div').last();
-    if (lastOutElem.hasClass('sp-progress') && $(result).first().hasClass('sp-progress')) {
-        lastOutElem.replaceWith(result);
-    } else {
-        $el.append(result);
-        $el.scrollTop($el.prop("scrollHeight"));
+function migrationMigrationsUpWithTag() {
+    var settag = prompt('Set migrations tag');
+    if (settag !== null) {
+        migrationExecuteStep('migration_execute', {
+            'next_action': 'up',
+            'settag': settag
+        });
     }
+}
+
+function migrationMigrationUp(version) {
+    migrationExecuteStep('migration_execute', {
+        'version': version,
+        'action': 'up'
+    });
+}
+
+function migrationMigrationDown(version) {
+    migrationExecuteStep('migration_execute', {
+        'version': version,
+        'action': 'down'
+    });
+}
+
+function migrationMigrationSetTag(version, defaultTag) {
+    var settag = prompt('Set migration tag', defaultTag);
+    if (settag !== null) {
+        migrationExecuteStep('migration_settag', {
+            'version': version,
+            'settag': settag
+        });
+    }
+}
+
+function migrationMigrationMark(version, status) {
+    migrationExecuteStep('migration_mark', {
+        'version': version,
+        'status': status,
+    });
+}
+
+function migrationMigrationTransfer(version, transferTo) {
+    migrationExecuteStep('migration_transfer', {
+        'version': version,
+        'transfer_to': transferTo,
+    });
+}
+
+function migrationMigrationDelete(version) {
+    if (confirm('Confirm delete migration file')) {
+        migrationExecuteStep('migration_delete', {
+            'version': version,
+        });
+    }
+}
+
+function migrationOutLog(result) {
+    let $res = jQuery('<div>' + result + '</div>');
+    let $el = jQuery('#migration_log');
+    let $pg = jQuery('#migration_progress');
+
+    $pg.html($res.children('.sp-progress'));
+
+    $el.append($res.children());
+
+    $el.scrollTop($el.prop("scrollHeight"));
 }
 
 function migrationExecuteStep(step_code, postData, succesCallback) {
     postData = postData || {};
     postData['step_code'] = step_code;
-    postData['send_sessid'] = $('#migration-container').data('sessid');
-    postData['search'] = $('input[name=migration_search]').val();
-    postData['addtag'] = $('input[name=migration_addtag]').val();
+    postData['sessid'] = jQuery('#migration_container').data('sessid');
+    postData['search'] = jQuery('#migration_search').val();
+    postData['migration_view'] = jQuery('#migration_view').val();
 
     migrationEnableButtons(0);
 
@@ -46,57 +103,81 @@ function migrationExecuteStep(step_code, postData, succesCallback) {
             }
         },
         error: function (result) {
-
-        }
-    });
-}
-
-function migrationEnableButtons(enable) {
-    var buttons = $('#migration-container').find('input,select');
-    if (enable) {
-        buttons.removeAttr('disabled');
-    } else {
-        buttons.attr('disabled', 'disabled');
-    }
-}
-
-function migrationMigrationRefresh(callbackAfterRefresh) {
-    var view = $('.sp-stat').val();
-    migrationExecuteStep('migration_' + view, {}, function (data) {
-        $('#migration_migrations').empty().html(data);
-        if (callbackAfterRefresh) {
-            callbackAfterRefresh()
-        } else {
+            migrationOutLog(result.responseText);
             migrationEnableButtons(1);
         }
     });
 }
 
+function migrationEnableButtons(enable) {
+    let $container = jQuery('#migration_container');
+    let $loader = jQuery('#migration_loading');
+    let $buttons = $container.find('input,select,.adm-btn');
+    if (enable) {
+        $buttons.removeAttr('disabled').removeClass('sp-disabled');
+        $loader.hide();
+    } else {
+        $buttons.attr('disabled', 'disabled').addClass('sp-disabled');
+        $loader.show();
+    }
+}
+
+function migrationListRefresh(callbackAfterRefresh) {
+    jQuery('#migration_actions').empty();
+    migrationExecuteStep(
+        jQuery('#migration_view').val(),
+        {},
+        function (data) {
+            jQuery('#migration_migrations').empty().html(data);
+            if (callbackAfterRefresh) {
+                callbackAfterRefresh()
+            } else {
+                migrationEnableButtons(1);
+            }
+        });
+}
+
 function migrationBuilder(postData) {
-    var $block = $('[data-builder="' + postData['builder_name'] + '"]');
     migrationExecuteStep('migration_create', postData, function (result) {
-        $block.html(result);
+        migrationBuilderRender(result)
     });
 }
 
-function migrationBuilderReset(postData) {
-    var $block = $('[data-builder="' + postData['builder_name'] + '"]');
+function migrationBuilderRestart() {
+    let postData = jQuery('#migration_builder form').serializeFormJSON();
+    migrationBuilder(postData);
+}
+
+function migrationReset(postData) {
     migrationExecuteStep('migration_reset', postData, function (result) {
-        $block.html(result);
+        migrationBuilderRender(result, {})
     });
 }
 
-function migrationScrollList() {
-    var $el = $('#migration_migrations');
+function migrationListScroll() {
+    var $el = jQuery('#migration_migrations');
     $el.scrollTop($el.prop("scrollHeight"));
+}
+
+function migrationBuilderRender(html) {
+    let $builder = jQuery('#migration_builder');
+    let formAttrs = $builder.serializeFormAttrs();
+
+    $builder.html(html);
+
+    jQuery.each(formAttrs, function (name, value) {
+        let $el = $builder.find('[data-attrs=' + name + ']');
+        if ($el.length > 0) {
+            $el.val(value).trigger('input');
+        }
+    });
 }
 
 jQuery(document).ready(function ($) {
 
     $.fn.serializeFormJSON = function () {
-
-        var o = {};
-        var a = this.serializeArray();
+        let o = {};
+        let a = this.serializeArray();
         $.each(a, function () {
             if (o[this.name]) {
                 if (!o[this.name].push) {
@@ -109,87 +190,124 @@ jQuery(document).ready(function ($) {
         });
         return o;
     };
-
-
-    var openblockIx = 0;
+    $.fn.serializeFormAttrs = function () {
+        let o = {};
+        $(this).find('[data-attrs]').each(function () {
+            let name = $(this).data('attrs');
+            let val = $(this).val();
+            if (val) {
+                o[name] = val;
+            }
+        });
+        return o;
+    };
 
     (function () {
-        if (localStorage) {
-            openblockIx = localStorage.getItem('migrations_open_block');
-            openblockIx = (openblockIx) ? parseInt(openblockIx, 10) : 0;
+        let viewName = localStorage.getItem('sprint_migrations_view');
+        if (viewName) {
+            $('#migration_view').val(viewName);
         }
 
-        var $block = $('.sp-block_title').eq(openblockIx).closest('.sp-block');
-        $block.addClass('sp-active');
-    })();
+        let searchName = localStorage.getItem('sprint_migrations_search');
+        if (searchName) {
+            $('#migration_search').val(searchName);
+        }
 
-    migrationMigrationRefresh(function () {
+        let builderName = localStorage.getItem('sprint_migrations_builder');
+        if (builderName) {
+            $('#migration_container [data-builder="' + builderName + '"]').addClass('sp-active');
+            migrationReset({builder_name: builderName});
+        }
+    })($);
+
+    migrationListRefresh(function () {
         migrationEnableButtons(1);
-        migrationScrollList();
+        migrationListScroll();
     });
 
-    $('#migration-container').on('change', '.sp-stat', function () {
-        migrationMigrationRefresh(function () {
+    $('#migration_view').on('change', function () {
+        localStorage.setItem('sprint_migrations_view', $(this).val())
+        migrationListRefresh(function () {
             migrationEnableButtons(1);
-            migrationScrollList();
-            $('#tab_cont_tab1').click();
+            migrationListScroll();
         });
     });
 
-    $('#migration-container').on('keypress', 'input[name=migration_search]', function (e) {
-        if (e.keyCode == 13) {
-            migrationMigrationRefresh(function () {
+    $('#migration_search').on('keypress', function (e) {
+        if (e.keyCode === 13) {
+            localStorage.setItem('sprint_migrations_search', $(this).val())
+            migrationListRefresh(function () {
                 migrationEnableButtons(1);
-                migrationScrollList();
-                $('#tab_cont_tab1').click();
+                migrationListScroll();
             });
         }
     });
 
-    $('#migration-container').on('click', '.sp-search', function () {
-        migrationMigrationRefresh(function () {
+    $('#migration_refresh').on('click', function () {
+        localStorage.setItem('sprint_migrations_search', $('#migration_search').val())
+        migrationListRefresh(function () {
             migrationEnableButtons(1);
-            migrationScrollList();
-            $('#tab_cont_tab1').click();
+            migrationListScroll();
         });
     });
 
-    $('#migration-container').on('click', '.sp-optgroup-check', function (e) {
-        var checkboxes = $(this).closest('.sp-optgroup').find(':checkbox');
-        checkboxes.attr("checked", !checkboxes.attr("checked"));
+    $('#migration_builder').on('click', '.sp-optgroup-check', function (e) {
         e.preventDefault();
+        var checkboxes = $(this).closest('.sp-optgroup').find('[type=checkbox]').not(':hidden');
+        checkboxes.prop("checked", !checkboxes.prop("checked"));
     });
 
-    $('[data-builder]').on('submit', 'form', function (e) {
+    $('#migration_builder').on('input', '.sp-optgroup-search', function (e) {
         e.preventDefault();
-        var postData = $(this).serializeFormJSON();
+        let searchText = $(this).val().toLowerCase();
+
+        $(this).closest('.sp-optgroup').find('.sp-optgroup-group').each(function () {
+            let all = 0;
+            let hide = 0;
+
+            $(this).find('label').each(function () {
+                let labelText = $(this).text().toLowerCase();
+
+                all++;
+                if (labelText.includes(searchText)) {
+                    $(this).show()
+                } else {
+                    hide++;
+                    $(this).hide()
+                }
+            });
+
+            if (hide > 0 && all === hide) {
+                $(this).hide();
+            } else {
+                $(this).show();
+            }
+        });
+    });
+
+    $('#migration_builder').on('submit', 'form', function (e) {
+        e.preventDefault();
+        let postData = $(this).serializeFormJSON();
         migrationBuilder(postData);
     });
 
-    $('[data-builder]').on('reset', 'form', function (e) {
+    $('#migration_builder').on('reset', 'form', function (e) {
         e.preventDefault();
-        var postData = $(this).serializeFormJSON();
-        migrationBuilderReset(postData);
+        let postData = $(this).serializeFormJSON();
+        migrationReset(postData);
     });
 
-    $('#migration-container').on('click', '.sp-block_title', function () {
-        var $block = $(this).closest('.sp-block');
+    $('#migration_container').on('click', '.sp-builder_title', function () {
 
-        $('.sp-block').not($block).removeClass('sp-active');
-        $block.addClass('sp-active');
+        var builderName = $(this).data('builder');
 
-        if (localStorage) {
-            openblockIx = $('.sp-block_title').index(this);
-            localStorage.setItem('migrations_open_block', '' + parseInt(openblockIx, 10));
-        }
+        $('.sp-builder_title').not(this).removeClass('sp-active');
 
-        var docViewTop = $(window).scrollTop();
-        var elemTop = $block.offset().top;
-        if (elemTop <= docViewTop) {
-            $(document).scrollTop(elemTop - 25);
-        }
+        $(this).addClass('sp-active');
 
-        $('[data-builder]').find('.adm-info-message-wrap,.sp-out').remove();
+        localStorage.setItem('sprint_migrations_builder', builderName);
+
+        migrationReset({builder_name: builderName});
     });
 
 

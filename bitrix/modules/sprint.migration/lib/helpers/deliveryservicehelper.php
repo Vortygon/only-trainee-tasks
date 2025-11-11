@@ -16,9 +16,12 @@ use Sprint\Migration\Helper;
 
 class DeliveryServiceHelper extends Helper
 {
-    public function __construct()
+    /**
+     * DeliveryServiceHelper constructor.
+     */
+    public function isEnabled(): bool
     {
-        $this->checkModules(['sale']);
+        return $this->checkModules(['sale']);
     }
 
     /**
@@ -43,6 +46,7 @@ class DeliveryServiceHelper extends Helper
     /**
      * Добавляет службу доставки. Позвоялет указывать символьный код в 'CODE' и он будет сохранён дополнительным
      * запросом, чего Битрикс делать не умеет.
+     *
      * @param array $fields
      *
      *    [
@@ -83,10 +87,11 @@ class DeliveryServiceHelper extends Helper
 
         $addResult = Manager::add($fields);
         if (!$addResult->isSuccess()) {
-            $this->throwException(
-                __METHOD__,
-                'Error adding delivery service: %s',
-                implode('; ', $addResult->getErrorMessages())
+            throw new HelperException(
+                sprintf(
+                    'Error adding delivery service: %s',
+                    implode('; ', $addResult->getErrorMessages())
+                )
             );
         }
 
@@ -109,10 +114,11 @@ class DeliveryServiceHelper extends Helper
                 ['CODE' => trim($fields['CODE'])]
             );
             if (!$updateResult->isSuccess()) {
-                $this->throwException(
-                    __METHOD__,
-                    'Error setting CODE while adding delivery service: %s',
-                    implode('; ', $updateResult->getErrorMessages())
+                throw new HelperException(
+                    sprintf(
+                        'Error setting CODE while adding delivery service: %s',
+                        implode('; ', $updateResult->getErrorMessages())
+                    )
                 );
             }
         }
@@ -131,15 +137,16 @@ class DeliveryServiceHelper extends Helper
     public function get($code)
     {
         $fields = Table::query()->setSelect(['*'])
-            ->setFilter(['CODE' => trim($code)])
-            ->exec()
-            ->fetch();
+                       ->setFilter(['CODE' => trim($code)])
+                       ->exec()
+                       ->fetch();
 
         if (false === $fields) {
-            $this->throwException(
-                __METHOD__,
-                'Delivery service [%s] not found.',
-                $code
+            throw new HelperException(
+                sprintf(
+                    'Delivery service [%s] not found.',
+                    $code
+                )
             );
         }
 
@@ -147,7 +154,7 @@ class DeliveryServiceHelper extends Helper
     }
 
     /**
-     * @param $code
+     * @param       $code
      * @param array $fields
      *
      * @throws Exception
@@ -162,11 +169,12 @@ class DeliveryServiceHelper extends Helper
         $updateResult = Manager::update($service->getId(), $fields);
 
         if (!$updateResult->isSuccess()) {
-            $this->throwException(
-                __METHOD__,
-                'Error updating delivery service [%s]: %s',
-                $code,
-                implode('; ', $updateResult->getErrorMessages())
+            throw new HelperException(
+                sprintf(
+                    'Error updating delivery service [%s]: %s',
+                    $code,
+                    implode('; ', $updateResult->getErrorMessages())
+                )
             );
         }
 
@@ -190,11 +198,12 @@ class DeliveryServiceHelper extends Helper
 
         $deleteResult = Manager::delete($service->getId());
         if (!$deleteResult->isSuccess()) {
-            $this->throwException(
-                __METHOD__,
-                'Error deleting delivery service [%s]: %s',
-                $code,
-                implode('; ', $deleteResult->getErrorMessages())
+            throw new HelperException(
+                sprintf(
+                    'Error deleting delivery service [%s]: %s',
+                    $code,
+                    implode('; ', $deleteResult->getErrorMessages())
+                )
             );
         }
     }
@@ -215,10 +224,11 @@ class DeliveryServiceHelper extends Helper
          */
         $unActiveResult = ExtraServicesManager::setStoresUnActive($deliveryId);
         if (!$unActiveResult->isSuccess()) {
-            $this->throwException(
-                __METHOD__,
-                'Error initializing empty extra services: %s',
-                implode('; ', $unActiveResult->getErrorMessages())
+            throw new HelperException(
+                sprintf(
+                    'Error initializing empty extra services: %s',
+                    implode('; ', $unActiveResult->getErrorMessages())
+                )
             );
         }
     }

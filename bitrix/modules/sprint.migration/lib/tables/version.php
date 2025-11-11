@@ -2,86 +2,90 @@
 
 namespace Sprint\Migration\Tables;
 
-use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\TextField;
+use Sprint\Migration\Exceptions\MigrationException;
+use Sprint\Migration\Traits\CurrentUserTrait;
 
 class VersionTable extends AbstractTable
 {
+    use CurrentUserTrait;
 
-    protected $tableVersion = 3;
+    const DATE_FORMAT = 'Y-m-d H:i:s';
 
     /**
-     * @throws SqlQueryException
-     * @return array
+     * @throws MigrationException
      */
-    public function getRecords()
+    public function getRecords(): array
     {
-        return $this->query('SELECT * FROM `#TABLE1#`')->fetchAll();
+        return $this->getAll();
     }
 
     /**
-     * @param $versionName
-     * @throws SqlQueryException
-     * @return array|false
+     * @throws MigrationException
      */
-    public function getRecord($versionName)
+    public function getRecord(string $versionName): array
     {
-        return $this->query('SELECT * FROM `#TABLE1#` WHERE `version` = "%s"',
-            $this->forSql($versionName)
-        )->fetch();
+        return $this->getOnce(['version' => $versionName]) ?: [];
     }
 
     /**
-     * @param $meta
-     * @throws SqlQueryException
+     * @throws MigrationException
      */
-    public function addRecord($meta)
+    public function addRecord(array $record)
     {
+        $record['meta'] = [
+            'created_by' => $this->getCurrentUserLogin(),
+            'created_at' => date(VersionTable::DATE_FORMAT),
+        ];
 
-        $version = $this->forSql($meta['version']);
-        $hash = $this->forSql($meta['hash']);
-        $tag = $this->forSql($meta['tag']);
-
-        $this->query('INSERT INTO `#TABLE1#` (`version`, `hash`, `tag`) VALUES ("%s", "%s", "%s") 
-                    ON DUPLICATE KEY UPDATE `hash` = "%s", `tag` = "%s"',
-            $version, $hash, $tag, $hash, $tag
-        );
+        $this->add($record);
     }
 
     /**
-     * @param $meta
-     * @throws SqlQueryException
+     * @throws MigrationException
      */
-    public function removeRecord($meta)
+    public function removeRecord(array $record)
     {
-        $this->query('DELETE FROM `#TABLE1#` WHERE `version` = "%s"',
-            $this->forSql($meta['version'])
-        );
-    }
-
-    protected function createTable()
-    {
-        //tableVersion 1
-        $this->query('CREATE TABLE IF NOT EXISTS `#TABLE1#`(
-              `id` MEDIUMINT NOT NULL AUTO_INCREMENT NOT NULL,
-              `version` varchar(255) COLLATE #COLLATE# NOT NULL,
-              PRIMARY KEY (id), UNIQUE KEY(version)
-              )ENGINE=InnoDB DEFAULT CHARSET=#CHARSET# COLLATE=#COLLATE# AUTO_INCREMENT=1;'
-        );
-
-        //tableVersion 2
-        if (empty($this->query('SHOW COLUMNS FROM `#TABLE1#` LIKE "hash"')->Fetch())) {
-            $this->query('ALTER TABLE `#TABLE1#` ADD COLUMN `hash` VARCHAR(50) NULL AFTER `version`');
-        }
-
-        //tableVersion 3
-        if (empty($this->query('SHOW COLUMNS FROM `#TABLE1#` LIKE "tag"')->Fetch())) {
-            $this->query('ALTER TABLE `#TABLE1#` ADD COLUMN `tag` VARCHAR(50) NULL AFTER `hash`');
+        $row = $this->getOnce(['version' => $record['version']]);
+        if ($row) {
+            $this->delete($row['id']);
         }
     }
 
-    protected function dropTable()
+    /**
+     * @throws MigrationException
+     */
+    public function updateTag(string $versionName, string $tag = '')
     {
-        $this->query('DROP TABLE IF EXISTS `#TABLE1#`;');
+        $row = $this->getOnce(['version' => $versionName]);
+        if ($row) {
+            $this->update($row['id'], ['tag' => $tag]);
+        }
     }
 
+    public function getMap(): array
+    {
+        return [
+            new IntegerField('id', [
+                'primary'      => true,
+                'autocomplete' => true,
+            ]),
+            new StringField('version', [
+                'size'   => 255,
+                'unique' => true,
+            ]),
+            new StringField('hash', [
+                'size' => 255,
+            ]),
+            new StringField('tag', [
+                'size' => 50,
+            ]),
+            new TextField('meta', [
+                'long'       => true,
+                'serialized' => true,
+            ]),
+        ];
+    }
 }

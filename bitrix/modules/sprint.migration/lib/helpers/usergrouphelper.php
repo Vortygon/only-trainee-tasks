@@ -8,99 +8,106 @@ use CSite;
 use CTask;
 use Sprint\Migration\Exceptions\HelperException;
 use Sprint\Migration\Helper;
+use Sprint\Migration\Locale;
 
 class UserGroupHelper extends Helper
 {
-
     /**
      * Получает список групп пользователей
-     * @param array $filter
-     * @return array
      */
-    public function getGroups($filter = [])
+    public function getGroups(array $filter = []): array
     {
         $by = 'c_sort';
         $order = 'asc';
 
         $res = [];
 
-        /** @noinspection PhpDynamicAsStaticMethodCallInspection */
         $dbres = CGroup::GetList($by, $order, $filter);
         while ($item = $dbres->Fetch()) {
             $res[] = $this->getGroup($item['ID']);
         }
 
         return $res;
-
     }
 
     /**
      * Получает группу пользователей
      * Данные подготовлены для экспорта в миграцию или схему
-     * @param $code
+     *
      * @throws HelperException
-     * @return mixed
      */
-    public function exportGroup($code)
+    public function exportGroup(int|string $code): array
     {
-        $item = $this->prepareExportGroup(
-            $this->getGroup($code)
-        );
+        $item = $this->getGroup($code);
 
         if (!empty($item['STRING_ID'])) {
-            return $item;
+            return $this->prepareExportGroup($item);
         }
 
-        $this->throwException(__METHOD__, 'code not found');
+        throw new HelperException(
+            Locale::getMessage(
+                'ERR_USER_GROUP_CODE_NOT_FOUND'
+            )
+        );
     }
 
     /**
      * Получает список групп пользователей
      * Данные подготовлены для экспорта в миграцию или схему
-     * @param array $filter
-     * @return array
      */
-    public function exportGroups($filter = [])
+    public function exportGroups(array $filter = []): array
     {
-        $items = $this->getGroups($filter);
-        $exports = [];
-        foreach ($items as $item) {
-            if (!empty($item['STRING_ID'])) {
-                $exports[] = $this->prepareExportGroup($item);
-            }
+        $items = array_filter(
+            $this->getGroups($filter),
+            fn($item) => !empty($item['STRING_ID'])
+        );
 
-        }
-        return $exports;
+        return array_map(
+            fn($item) => $this->prepareExportGroup($item),
+            $items
+        );
     }
 
     /**
      * Получает код группы пользователей по id
-     * @param $id
-     * @return bool
      */
-    public function getGroupCode($id)
+    public function getGroupCode(int|string $id): bool|string
     {
         $group = $this->getGroup($id);
-        return ($group) ? $group['STRING_ID'] : false;
+        return ($group) ? (string)$group['STRING_ID'] : false;
     }
 
     /**
-     * Получает id группы пользователей по id
-     * @param $code
-     * @return bool
+     * Получает id группы пользователей по коду
      */
-    public function getGroupId($code)
+    public function getGroupId(int|string $code): bool|int
     {
         $group = $this->getGroup($code);
         return ($group) ? $group['ID'] : false;
     }
 
     /**
-     * Получает группу пользователей
-     * @param $code int|string - id или код группы
-     * @return array|bool
+     * @throws HelperException
      */
-    public function getGroup($code)
+    public function getGroupIdIfExists(int|string $code): int
+    {
+        $group = $this->getGroupIfExists($code);
+        return (int)$group['ID'];
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function getGroupCodeIfExists(int|string $id): string
+    {
+        $group = $this->getGroupIfExists($id);
+        return (string)$group['STRING_ID'];
+    }
+
+    /**
+     * Получает группу пользователей
+     */
+    public function getGroup(int|string $code): bool|array
     {
         $groupId = is_numeric($code) ? $code : CGroup::GetIDByCode($code);
 
@@ -125,60 +132,77 @@ class UserGroupHelper extends Helper
         }
 
         return $item;
-
     }
 
+    /**
+     * @throws HelperException
+     */
+    public function getGroupIfExists(int|string $code): array
+    {
+        $item = $this->getGroup($code);
+        if (!empty($item['STRING_ID'])) {
+            return $item;
+        }
+        throw new HelperException("Group with id_or_code=\"$code\" not found or has empty STRING_ID");
+    }
 
     /**
-     * Сохраняет группу
-     * Создаст если не было, обновит если существует и отличается
-     * @param $code
-     * @param array $fields , обязательные параметры - название групы
+     * Сохраняет группу, создаст если не было, обновит если существует и отличается
+     *
      * @throws HelperException
-     * @return bool|int|mixed
      */
-    public function saveGroup($code, $fields = [])
+    public function saveGroup(string $code, array $fields = []): int
     {
         $fields['STRING_ID'] = $code;
-        $this->checkRequiredKeys(__METHOD__, $fields, ['STRING_ID', 'NAME']);
+        $this->checkRequiredKeys($fields, ['STRING_ID', 'NAME']);
 
         $exists = $this->getGroup($fields['STRING_ID']);
-        $exportExists = $this->prepareExportGroup($exists);
         $fields = $this->prepareExportGroup($fields);
 
         if (empty($exists)) {
-            $ok = $this->getMode('test') ? true : $this->addGroup($fields['STRING_ID'], $fields);
-            $this->outNoticeIf($ok, 'Группа %s: добавлена', $fields['NAME']);
+            $ok = $this->addGroup($fields['STRING_ID'], $fields);
+            $this->outNoticeIf(
+                $ok,
+                Locale::getMessage(
+                    'USER_GROUP_CREATED',
+                    [
+                        '#NAME#' => $fields['NAME'],
+                    ]
+                )
+            );
             return $ok;
         }
 
+        $exportExists = $this->prepareExportGroup($exists);
+
         if ($this->hasDiff($exportExists, $fields)) {
-            $ok = $this->getMode('test') ? true : $this->updateGroup($exists['ID'], $fields);
-            $this->outNoticeIf($ok, 'Группа %s: обновлена', $fields['NAME']);
+            $ok = $this->updateGroup($exists['ID'], $fields);
+            $this->outNoticeIf(
+                $ok,
+                Locale::getMessage(
+                    'USER_GROUP_UPDATED',
+                    [
+                        '#NAME#' => $fields['NAME'],
+                    ]
+                )
+            );
             $this->outDiffIf($ok, $exportExists, $fields);
             return $ok;
         }
 
-
-        $ok = $this->getMode('test') ? true : $exists['ID'];
-        if ($this->getMode('out_equal')) {
-            $this->outIf($ok, 'Группа %s: совпадает', $fields['NAME']);
-        }
-        return $ok;
+        return (int)$exists['ID'];
     }
 
     /**
      * Добаляет группу пользователей если она не существует
-     * @param $code
-     * @param array $fields
+     *
      * @throws HelperException
-     * @return int
      */
-    public function addGroupIfNotExists($code, $fields = [])
+    public function addGroupIfNotExists(int|string $code, array $fields = []): int
     {
         $groupId = $this->getGroupId($code);
         if ($groupId) {
-            return intval($groupId);
+            return (int)$groupId;
         }
 
         return $this->addGroup($code, $fields);
@@ -186,70 +210,64 @@ class UserGroupHelper extends Helper
 
     /**
      * Обновляет группу пользователей если она существует
-     * @param $code
-     * @param array $fields
+     *
      * @throws HelperException
-     * @return bool|int
      */
-    public function updateGroupIfExists($code, $fields = [])
+    public function updateGroupIfExists(int|string $code, array $fields = []): bool|int
     {
         $groupId = $this->getGroupId($code);
-        if (!$groupId) {
-            return false;
+        if ($groupId) {
+            return $this->updateGroup($groupId, $fields);
         }
 
-        return $this->updateGroup($groupId, $fields);
+        return false;
     }
 
     /**
      * Добавляет группу пользователей
-     * @param $code
-     * @param array $fields , , обязательные параметры - название групы
+     *
      * @throws HelperException
-     * @return int
      */
-    public function addGroup($code, $fields = [])
+    public function addGroup(string $code, array $fields = []): int
     {
         $fields['STRING_ID'] = $code;
-        $this->checkRequiredKeys(__METHOD__, $fields, ['STRING_ID', 'NAME']);
+        $this->checkRequiredKeys($fields, ['STRING_ID', 'NAME']);
 
         $group = new CGroup;
         $groupId = $group->Add($this->prepareFields($fields));
 
         if ($groupId) {
-            return intval($groupId);
+            return (int)$groupId;
         }
 
-        $this->throwException(__METHOD__, $group->LAST_ERROR);
+        throw new HelperException($group->LAST_ERROR);
     }
 
     /**
      * Обновляет группу пользователей
-     * @param $groupId
-     * @param array $fields
+     *
      * @throws HelperException
-     * @return int
      */
-    public function updateGroup($groupId, $fields = [])
+    public function updateGroup(int $groupId, array $fields = []): int
     {
         if (empty($fields)) {
-            $this->throwException(__METHOD__, 'Set fields for group');
+            throw new HelperException(
+                Locale::getMessage('ERR_SET_FIELDS_FOR_UPDATE_GROUP')
+            );
         }
 
         $group = new CGroup;
         if ($group->Update($groupId, $this->prepareFields($fields))) {
-            return intval($groupId);
+            return $groupId;
         }
 
-        $this->throwException(__METHOD__, $group->LAST_ERROR);
+        throw new HelperException($group->LAST_ERROR);
     }
 
     /**
      * Удаляет группу пользователей
-     * @param $code
-     * @return bool
      */
-    public function deleteGroup($code)
+    public function deleteGroup(int|string $code): bool
     {
         $groupId = $this->getGroupId($code);
         if (empty($groupId)) {
@@ -262,20 +280,9 @@ class UserGroupHelper extends Helper
     }
 
     /**
-     * @param array $filter
-     * @return array
-     * @deprecated
+     * Сброс настроек доступа группы
      */
-    public function getGroupsByFilter($filter = [])
-    {
-        return $this->getGroups($filter);
-    }
-
-    /**
-     * Cброс настроек доступа группы
-     * @param $groupId
-     */
-    public function deleteGroupPermissions($groupId)
+    public function deleteGroupPermissions(int $groupId): void
     {
         global $APPLICATION;
 
@@ -285,14 +292,17 @@ class UserGroupHelper extends Helper
             $moduleIds[] = $item['ID'];
         }
 
+        $by = "sort";
+        $order = "asc";
+
         $siteIds = [];
-        $dbres = CSite::GetList($by = "sort", $order = "asc", ["ACTIVE" => "Y"]);
+        $dbres = CSite::GetList($by, $order, ["ACTIVE" => "Y"]);
         while ($item = $dbres->GetNext()) {
             $siteIds[] = $item["ID"];
         }
 
         foreach ($moduleIds as $moduleId) {
-            $APPLICATION->DelGroupRight($moduleId, [$groupId], false);
+            $APPLICATION->DelGroupRight($moduleId, [$groupId]);
             foreach ($siteIds as $siteId) {
                 $APPLICATION->DelGroupRight($moduleId, [$groupId], $siteId);
             }
@@ -300,32 +310,28 @@ class UserGroupHelper extends Helper
 
         CGroup::SetSubordinateGroups($groupId);
 
-        $tasksMap = CGroup::GetTasks($groupId, true);
-        foreach ($tasksMap as $moduleId => $taskId) {
+        $tasksMap = CGroup::GetTasks($groupId);
+        foreach ($tasksMap as $taskId) {
             CTask::Delete($taskId, false);
         }
     }
 
-    protected function prepareExportGroup($item)
+    protected function prepareExportGroup(array $item): array
     {
-        if (empty($item)) {
-            return $item;
-        }
-
-        unset($item['ID']);
-        unset($item['TIMESTAMP_X']);
+        $this->unsetKeys($item, [
+            'ID',
+            'TIMESTAMP_X',
+        ]);
 
         return $item;
     }
 
     protected function prepareFields($fields)
     {
-        if (!empty($fields['SECURITY_POLICY']) && is_array($fields['SECURITY_POLICY'])) {
+        if (is_array($fields['SECURITY_POLICY'])) {
             $fields['SECURITY_POLICY'] = serialize($fields['SECURITY_POLICY']);
         }
 
         return $fields;
     }
-
-
 }

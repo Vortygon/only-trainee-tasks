@@ -5,6 +5,9 @@
  * @var $description
  * @var $extendUse
  * @var $extendClass
+ * @var $moduleVersion
+ * @var $author
+ * @formatter:off
  */
 
 ?><?php echo "<?php\n" ?>
@@ -16,21 +19,20 @@ namespace Sprint\Migration;
 class <?php echo $version ?> extends <?php echo $extendClass ?>
 
 {
+    protected $author = "<?php echo $author ?>";
 
     protected $description = "<?php echo $description ?>";
+
+    protected $moduleVersion = "<?php echo $moduleVersion ?>";
 
     public function up()
     {
         $helper = $this->getHelperManager();
-
         //your code ...
     }
 
     public function down()
     {
-        $helper = $this->getHelperManager();
-
         //your code ...
     }
-
 }

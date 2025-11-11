@@ -2,11 +2,15 @@
 
 namespace Sprint\Migration\Helpers;
 
+use CGridOptions;
 use CUserOptions;
+use Sprint\Migration\Exceptions\HelperException;
 use Sprint\Migration\Helper;
-use Sprint\Migration\Helpers\UserOptions\IblockTrait;
-use Sprint\Migration\Helpers\UserOptions\UserGroupTrait;
-use Sprint\Migration\Helpers\UserOptions\UserTrait;
+use Sprint\Migration\Helpers\Traits\UserOptions\HlblockTrait;
+use Sprint\Migration\Helpers\Traits\UserOptions\IblockTrait;
+use Sprint\Migration\Helpers\Traits\UserOptions\UserGroupTrait;
+use Sprint\Migration\Helpers\Traits\UserOptions\UserTrait;
+use Sprint\Migration\Locale;
 
 /*
 Example $formData for buildForm
@@ -27,8 +31,8 @@ $formData = [
 ];
 
 
-Example $listData for listForm
-$listData = [
+Example $data for listForm
+$data = [
     'columns' => [
         'LOGIN',
         'ACTIVE',
@@ -49,15 +53,24 @@ class UserOptionsHelper extends Helper
     use IblockTrait;
     use UserTrait;
     use UserGroupTrait;
+    use HlblockTrait;
 
+    /**
+     * @param array $params
+     * @throws HelperException
+     * @return array|bool|mixed
+     */
     public function exportList($params = [])
     {
-        $this->checkRequiredKeys(__METHOD__, $params, ['name']);
+        $this->checkRequiredKeys($params, ['name']);
 
-        $params = array_merge([
-            'name' => '',
-            'category' => 'list',
-        ], $params);
+        $params = array_merge(
+            [
+                'name'     => '',
+                'category' => 'list',
+            ],
+            $params
+        );
 
         $option = CUserOptions::GetOption(
             $params['category'],
@@ -70,59 +83,68 @@ class UserOptionsHelper extends Helper
             return [];
         }
 
-        $option = array_merge([
-            'page_size' => 20,
-            'order' => 'desc',
-            'by' => 'timestamp_x',
-        ], $option);
+        $option = array_merge(
+            [
+                'page_size' => 20,
+                'order'     => 'desc',
+                'by'        => 'timestamp_x',
+            ],
+            $option
+        );
 
-        $option['columns'] = explode(',', $option['columns']);
+        $option['columns'] = $this->revertCodesFromColumns($option['columns']);
 
         return $option;
     }
 
-    public function buildList($listData = [], $params = [])
+    /**
+     * @param array $data
+     * @param array $params
+     * @throws HelperException
+     * @return bool
+     */
+    public function buildList($data = [], $params = [])
     {
-        $this->checkRequiredKeys(__METHOD__, $params, ['name']);
+        $this->checkRequiredKeys($params, ['name']);
 
         /** @compability with old format */
-        if (!isset($listData['columns'])) {
-            $listData = [
-                'columns' => is_array($listData) ? $listData : [],
+        if (!isset($data['columns'])) {
+            $data = [
+                'columns'   => is_array($data) ? $data : [],
                 'page_size' => isset($params['page_size']) ? $params['page_size'] : '',
-                'order' => isset($params['order']) ? $params['order'] : '',
-                'by' => isset($params['by']) ? $params['by'] : '',
+                'order'     => isset($params['order']) ? $params['order'] : '',
+                'by'        => isset($params['by']) ? $params['by'] : '',
             ];
         }
 
-        $params = array_merge([
-            'name' => '',
-            'category' => 'list',
-        ], $params);
+        $params = array_merge(
+            [
+                'name'     => '',
+                'category' => 'list',
+            ],
+            $params
+        );
 
-        $listData = array_merge([
-            'columns' => [],
-            'page_size' => 20,
-            'order' => 'desc',
-            'by' => 'timestamp_x',
-        ], $listData);
+        $data = array_merge(
+            [
+                'columns'   => [],
+                'page_size' => 20,
+                'order'     => 'desc',
+                'by'        => 'timestamp_x',
+            ],
+            $data
+        );
 
-        if (empty($listData) || empty($listData['columns'])) {
+        if (empty($data) || empty($data['columns'])) {
             CUserOptions::DeleteOptionsByName($params['category'], $params['name']);
             return true;
         }
 
-        $opts = [];
-        foreach ($listData['columns'] as $columnCode) {
-            $opts[] = $this->transformCode($columnCode);
-        }
-        $opts = implode(',', $opts);
-
         $value = [
-            'columns' => $opts,
+            'columns'   => $this->transformCodesToColumns($data['columns']),
             'page_size' => $params['page_size'],
-            'order' => $params['order'],
-            'by' => $params['by'],
+            'order'     => $params['order'],
+            'by'        => $params['by'],
         ];
 
         CUserOptions::DeleteOptionsByName(
@@ -140,34 +162,116 @@ class UserOptionsHelper extends Helper
         return true;
     }
 
-    public function saveList($listData = [], $params = [])
+    /**
+     * @param array $data
+     * @param array $params
+     * @throws HelperException
+     * @return bool
+     */
+    public function saveList($data = [], $params = [])
     {
         $exists = $this->exportList($params);
-        if ($this->hasDiff($exists, $listData)) {
-            $ok = $this->getMode('test') ? true : $this->buildList($listData, $params);
-            $this->outNoticeIf($ok, 'Список "%s" сохранен', $params['name']);
-            $this->outDiffIf($ok, $exists, $listData);
+        if ($this->hasDiff($exists, $data)) {
+            $ok = $this->buildList($data, $params);
+            $this->outNoticeIf(
+                $ok,
+                Locale::getMessage(
+                    'USER_OPTION_LIST_CREATED',
+                    [
+                        '#NAME#' => $params['name'],
+                    ]
+                )
+            );
+            $this->outDiffIf($ok, $exists, $data);
             return $ok;
-        } else {
-            if ($this->getMode('out_equal')) {
-                $this->out('Список "%s" совпадает', $params['name']);
-            }
-            return true;
         }
+
+        return true;
     }
 
+    public function exportGrid($gridId)
+    {
+        $params = CUserOptions::GetOption(
+            "main.interface.grid",
+            $gridId,
+            []
+        );
+        if (!empty($params)) {
+            $options = (new CGridOptions($gridId))->GetOptions();
+
+            foreach ($options['views'] as $viewCode => $view) {
+                $view['columns'] = $this->revertCodesFromColumns($view['columns']);
+                $view['custom_names'] = $this->revertCustomNames($view['custom_names']);
+                $options['views'][$viewCode] = $view;
+            }
+
+            return $options;
+        }
+        return [];
+    }
+
+    public function buildGrid($gridId, $options = [])
+    {
+        foreach ($options['views'] as $viewCode => $view) {
+            $view['columns'] = $this->transformCodesToColumns($view['columns']);
+            $view['custom_names'] = $this->transformCustomNames($view['custom_names']);
+            $options['views'][$viewCode] = $view;
+        }
+
+        CUserOptions::DeleteOptionsByName(
+            'main.interface.grid',
+            $gridId
+        );
+        CUserOptions::setOption(
+            "main.interface.grid",
+            $gridId,
+            $options,
+            true
+        );
+
+        return true;
+    }
+
+    public function saveGrid($gridId, $params = [])
+    {
+        $exists = $this->exportGrid($gridId);
+        if ($this->hasDiff($exists, $params)) {
+            $ok = $this->buildGrid($gridId, $params);
+            $this->outNoticeIf(
+                $ok,
+                Locale::getMessage(
+                    'USER_OPTION_GRID_CREATED',
+                    [
+                        '#NAME#' => $gridId,
+                    ]
+                )
+            );
+            $this->outDiffIf($ok, $exists, $params);
+            return $ok;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array $params
+     * @throws HelperException
+     * @return array
+     */
     public function exportForm($params = [])
     {
         /** @compability */
         if (isset($params['name_prefix'])) {
-            $this->throwException(__METHOD__, 'name_prefix is no longer supported, see examples');
+            throw new HelperException('name_prefix is no longer supported, see examples');
         }
 
-        $params = array_merge([
-            'name' => '',
-            'category' => 'form',
-        ], $params);
-
+        $params = array_merge(
+            [
+                'name'     => '',
+                'category' => 'form',
+            ],
+            $params
+        );
 
         $option = CUserOptions::GetOption(
             $params['category'],
@@ -183,9 +287,11 @@ class UserOptionsHelper extends Helper
         }
 
         $optionTabs = explode(';', $option['tabs']);
+
         foreach ($optionTabs as $tabStrings) {
             $extractedFields = [];
             $tabTitle = '';
+            $tabId = '';
 
             $columnString = explode(',', $tabStrings);
 
@@ -194,7 +300,7 @@ class UserOptionsHelper extends Helper
                     continue;
                 }
 
-                list($fieldCode, $fieldTitle) = explode('#', $fieldString);
+                [$fieldCode, $fieldTitle] = explode('#', $fieldString);
 
                 $fieldCode = str_replace('--', '', strval($fieldCode));
                 $fieldTitle = str_replace('--', '', strval($fieldTitle));
@@ -204,6 +310,7 @@ class UserOptionsHelper extends Helper
 
                 if ($fieldIndex == 0) {
                     $tabTitle = $fieldTitle;
+                    $tabId = $fieldCode;
                 } else {
                     $fieldCode = $this->revertCode($fieldCode);
                     $extractedFields[$fieldCode] = $fieldTitle;
@@ -211,25 +318,33 @@ class UserOptionsHelper extends Helper
             }
 
             if ($tabTitle) {
-                $extractedTabs[$tabTitle] = $extractedFields;
+                $extractedTabs[$tabTitle . '|' . $tabId] = $extractedFields;
             }
-
         }
 
         return $extractedTabs;
     }
 
+    /**
+     * @param array $formData
+     * @param array $params
+     * @throws HelperException
+     * @return bool
+     */
     public function buildForm($formData = [], $params = [])
     {
         /** @compability */
         if (isset($params['name_prefix'])) {
-            $this->throwException(__METHOD__, 'name_prefix is no longer supported, see examples');
+            throw new HelperException('name_prefix is no longer supported, see examples');
         }
 
-        $params = array_merge([
-            'name' => '',
-            'category' => 'form',
-        ], $params);
+        $params = array_merge(
+            [
+                'name'     => '',
+                'category' => 'form',
+            ],
+            $params
+        );
 
         if (empty($formData)) {
             CUserOptions::DeleteOptionsByName(
@@ -243,18 +358,20 @@ class UserOptionsHelper extends Helper
         $tabVals = [];
 
         foreach ($formData as $tabTitle => $fields) {
+            [$tabTitle, $tabId] = explode('|', $tabTitle);
 
-            $tabCode = ($tabIndex == 0) ? 'edit' . ($tabIndex + 1) : '--edit' . ($tabIndex + 1);
-            $tabVals[$tabIndex][] = $tabCode . '--#--' . $tabTitle . '--';
+            if (!$tabId) {
+                $tabId = 'edit' . ($tabIndex + 1);
+            }
 
-            foreach ($fields as $fieldKey => $fieldValue) {
+            $tabId = ($tabIndex == 0) ? $tabId : '--' . $tabId;
 
-                if (is_numeric($fieldKey)) {
+            $tabVals[$tabIndex][] = $tabId . '--#--' . $tabTitle . '--';
+
+            foreach ($fields as $fcode => $ftitle) {
+                if (is_numeric($fcode)) {
                     /** @compability */
-                    list($fcode, $ftitle) = explode('|', $fieldValue);
-                } else {
-                    $fcode = $fieldKey;
-                    $ftitle = $fieldValue;
+                    [$fcode, $ftitle] = explode('|', $ftitle);
                 }
 
                 $fcode = $this->transformCode($fcode);
@@ -291,20 +408,29 @@ class UserOptionsHelper extends Helper
         return true;
     }
 
+    /**
+     * @param array $formData
+     * @param array $params
+     * @throws HelperException
+     * @return bool
+     */
     public function saveForm($formData = [], $params = [])
     {
         $exists = $this->exportForm($params);
-        if ($this->hasDiff($exists, $formData)) {
-            $ok = $this->getMode('test') ? true : $this->buildForm($formData, $params);
-            $this->outNoticeIf($ok, 'Форма редактирования "%s" сохранена', $params['name']);
+        if ($this->hasDiffStrict($exists, $formData)) {
+            $ok = $this->buildForm($formData, $params);
+            $this->outNoticeIf(
+                $ok,
+                Locale::getMessage(
+                    'USER_OPTION_FORM_CREATED',
+                    [
+                        '#NAME#' => $params['name'],
+                    ]
+                )
+            );
             $this->outDiffIf($ok, $exists, $formData);
             return $ok;
-        } else {
-            if ($this->getMode('out_equal')) {
-                $this->out('Форма редактирования "%s" совпадает', $params['name']);
-            }
-            return true;
         }
+        return true;
     }
-
 }

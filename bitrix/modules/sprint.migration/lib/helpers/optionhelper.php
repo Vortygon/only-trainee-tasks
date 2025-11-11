@@ -2,114 +2,133 @@
 
 namespace Sprint\Migration\Helpers;
 
-use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
+use Exception;
+use Sprint\Migration\Exceptions\HelperException;
 use Sprint\Migration\Helper;
-use Sprint\Migration\Tables\OptionTable;
+use Sprint\Migration\Locale;
 
 class OptionHelper extends Helper
 {
-
-    public function isEnabled()
+    public function isEnabled(): bool
     {
         return (
-            class_exists('\Bitrix\Main\ModuleManager') &&
-            class_exists('\Bitrix\Main\Entity\DataManager') &&
-            class_exists('\Bitrix\Main\Config\Option')
+            class_exists('\Bitrix\Main\ModuleManager')
+            && class_exists('\Bitrix\Main\Entity\DataManager')
+            && class_exists('\Bitrix\Main\Config\Option')
         );
     }
 
-    /**
-     * @return array|mixed
-     */
-    public function getModules()
+    public function getModules(array $filter = []): array
     {
-        return ModuleManager::getInstalledModules();
+        $modules = ModuleManager::getInstalledModules();
+
+        if (isset($filter['!ID'])) {
+            $skipModules = is_array($filter['!ID']) ? $filter['!ID'] : [$filter['!ID']];
+
+            $modules = array_filter($modules, function ($module) use ($skipModules) {
+                return !in_array($module['ID'], $skipModules);
+            });
+        }
+
+        return $modules;
     }
 
     /**
-     * @param array $filter
-     * @throws ArgumentException
-     * @return array
+     * @throws HelperException
      */
-    public function getOptions($filter = [])
+    public function getOptions(array $filter = []): array
     {
-        $dbres = OptionTable::getList([
-            'filter' => $filter,
-        ]);
+        $this->checkRequiredKeys($filter, ['MODULE_ID']);
+
+        try {
+            $values = Option::getForModule($filter['MODULE_ID']);
+        } catch (Exception) {
+            $values = [];
+        }
 
         $result = [];
-        while ($item = $dbres->fetch()) {
-            $result[] = $this->prepareOption($item);
+        foreach ($values as $optionName => $value) {
+            $result[] = $this->prepareOption([
+                'MODULE_ID' => $filter['MODULE_ID'],
+                'NAME'      => $optionName,
+                'VALUE'     => $value,
+            ]);
         }
 
         return $result;
     }
 
     /**
-     * @param array $filter , обязательные параметры - id модуля, функция агента
-     * @throws ArgumentException
-     * @return mixed
+     * @throws HelperException
      */
-    public function getOption($filter = [])
+    public function getOption(array $filter = []): array
     {
-        $this->checkRequiredKeys(__METHOD__, $filter, ['MODULE_ID', 'NAME']);
+        $this->checkRequiredKeys($filter, ['MODULE_ID', 'NAME']);
 
-        $item = OptionTable::getList([
-            'filter' => $filter,
-        ])->fetch();
-
-        return $this->prepareOption($item);
+        try {
+            $value = Option::get($filter['MODULE_ID'], $filter['NAME']);
+            return $this->prepareOption([
+                'MODULE_ID' => $filter['MODULE_ID'],
+                'NAME'      => $filter['NAME'],
+                'VALUE'     => $value,
+            ]);
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
-     * @param $fields , обязательные параметры - id модуля, функция агента
-     * @throws ArgumentException
-     * @return bool
+     * @throws HelperException
      */
-    public function saveOption($fields)
+    public function saveOption(array $fields): bool
     {
-        $this->checkRequiredKeys(__METHOD__, $fields, ['MODULE_ID', 'NAME']);
+        $this->checkRequiredKeys($fields, ['MODULE_ID', 'NAME']);
 
         $exists = $this->getOption([
             'MODULE_ID' => $fields['MODULE_ID'],
-            'NAME' => $fields['NAME'],
-            'SITE_ID' => $fields['SITE_ID'],
+            'NAME'      => $fields['NAME'],
         ]);
 
         if (empty($exists)) {
-            $ok = $this->getMode('test') ? true : $this->setOption($fields);
-            $this->outNoticeIf($ok, 'Настройка %s:%s: добавлена', $fields['MODULE_ID'], $fields['NAME']);
+            $ok = $this->setOption($fields);
+            $this->outNoticeIf(
+                $ok,
+                Locale::getMessage(
+                    'OPTION_CREATED',
+                    [
+                        '#NAME#' => $fields['MODULE_ID'] . ':' . $fields['NAME'],
+                    ]
+                )
+            );
             return $ok;
         }
 
         if ($this->hasDiff($exists, $fields)) {
-            $ok = $this->getMode('test') ? true : $this->setOption($fields);
-            $this->outNoticeIf($ok, 'Настройка %s:%s: обновлена', $fields['MODULE_ID'], $fields['NAME']);
+            $ok = $this->setOption($fields);
+            $this->outNoticeIf(
+                $ok,
+                Locale::getMessage(
+                    'OPTION_UPDATED',
+                    [
+                        '#NAME#' => $fields['MODULE_ID'] . ':' . $fields['NAME'],
+                    ]
+                )
+            );
             $this->outDiffIf($ok, $exists, $fields);
             return $ok;
         }
 
-
-        $ok = true;
-        if ($this->getMode('out_equal')) {
-            $this->outIf($ok, 'Настройка %s:%s: совпадает', $fields['MODULE_ID'], $fields['NAME']);
-        }
-        return $ok;
-
+        return true;
     }
 
     /**
-     * @param array $filter , обязательные параметры - id модуля
-     * @throws ArgumentNullException
-     * @return bool
+     * @throws HelperException
      */
-    public function deleteOptions($filter = [])
+    public function deleteOptions(array $filter = []): bool
     {
-        $this->checkRequiredKeys(__METHOD__, $filter, ['MODULE_ID']);
+        $this->checkRequiredKeys($filter, ['MODULE_ID']);
 
         $params = [];
 
@@ -117,67 +136,27 @@ class OptionHelper extends Helper
             $params['name'] = $filter['NAME'];
         }
 
-        if (isset($filter['SITE_ID'])) {
-            $params['site_id'] = $filter['SITE_ID'];
+        try {
+            Option::delete($filter['MODULE_ID'], $params);
+            return true;
+        } catch (Exception) {
         }
 
-        Option::delete($filter['MODULE_ID'], $params);
-        return true;
+        return false;
     }
 
-    /**
-     * @param array $filter
-     * @throws ArgumentException
-     * @return array
-     */
-    public function exportOptions($filter = [])
-    {
-        $agents = $this->getOptions($filter);
-
-        $exportAgents = [];
-        foreach ($agents as $agent) {
-            $exportAgents[] = $this->prepareExportOption($agent);
-        }
-
-        return $exportAgents;
-    }
-
-    /**
-     * @param array $filter
-     * @throws ArgumentException
-     * @return bool
-     */
-    public function exportOption($filter = [])
-    {
-        $item = $this->getOption($filter);
-        if (empty($item)) {
-            return false;
-        }
-
-        return $this->prepareExportOption($item);
-    }
-
-    /**
-     * @param $fields
-     * @throws ArgumentOutOfRangeException
-     * @return bool
-     */
-    protected function setOption($fields)
+    protected function setOption(array $fields): bool
     {
         $fields = $this->revertOption($fields);
-        Option::set($fields['MODULE_ID'], $fields['NAME'], $fields['VALUE'], $fields['SITE_ID']);
-        return true;
-    }
-
-    protected function prepareExportOption($item)
-    {
-        if (empty($item)) {
-            return $item;
+        try {
+            Option::set($fields['MODULE_ID'], $fields['NAME'], $fields['VALUE']);
+            return true;
+        } catch (Exception) {
         }
-        return $item;
+        return false;
     }
 
-    protected function prepareOption($item)
+    protected function prepareOption(array $item): array
     {
         if (!empty($item['VALUE']) && !is_numeric($item['VALUE'])) {
             if ($this->isSerialize($item['VALUE'])) {
@@ -185,14 +164,12 @@ class OptionHelper extends Helper
             } elseif ($this->isJson($item['VALUE'])) {
                 $item['VALUE'] = json_decode($item['VALUE'], true);
                 $item['TYPE'] = 'json';
-            } elseif (is_int($item['VALUE'])) {
-                $item['VALUE'] = intval($item['VALUE']);
             }
         }
         return $item;
     }
 
-    protected function revertOption($item)
+    protected function revertOption(array $item): array
     {
         $type = '';
         if (isset($item['TYPE'])) {
@@ -206,19 +183,17 @@ class OptionHelper extends Helper
             } else {
                 $item['VALUE'] = serialize($item['VALUE']);
             }
-        } elseif (is_int($item['VALUE'])) {
-            $item['VALUE'] = intval($item['VALUE']);
         }
 
         return $item;
     }
 
-    protected function isSerialize($string)
+    protected function isSerialize($string): bool
     {
         return (unserialize($string) !== false || $string == 'b:0;');
     }
 
-    protected function isJson($string)
+    protected function isJson($string): bool
     {
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);

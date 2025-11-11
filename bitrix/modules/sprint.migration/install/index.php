@@ -1,19 +1,19 @@
 <?php
 
-Class sprint_migration extends CModule
+use Sprint\Migration\Locale;
+
+class sprint_migration extends CModule
 {
     var $MODULE_ID = "sprint.migration";
-
     var $MODULE_NAME;
     var $MODULE_VERSION;
     var $MODULE_VERSION_DATE;
     var $MODULE_DESCRIPTION;
     var $PARTNER_NAME;
     var $PARTNER_URI;
-
     var $MODULE_GROUP_RIGHTS = "Y";
 
-    function sprint_migration()
+    public function __construct()
     {
         $arModuleVersion = [];
 
@@ -23,33 +23,47 @@ Class sprint_migration extends CModule
         $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 
         include(__DIR__ . '/../locale/ru.php');
+        include(__DIR__ . '/../locale/en.php');
 
-        $this->MODULE_NAME = GetMessage("SPRINT_MIGRATION_MODULE_NAME");
-        $this->MODULE_DESCRIPTION = GetMessage("SPRINT_MIGRATION_MODULE_DESCRIPTION");
-        $this->PARTNER_NAME = GetMessage("SPRINT_MIGRATION_PARTNER_NAME");
-        $this->PARTNER_URI = GetMessage("SPRINT_MIGRATION_PARTNER_URI");
+        $this->MODULE_NAME = GetMessage("SPRINT_MIGRATION_RU_MODULE_NAME");
+        $this->MODULE_DESCRIPTION = GetMessage("SPRINT_MIGRATION_RU_MODULE_DESCRIPTION");
+        $this->PARTNER_NAME = GetMessage("SPRINT_MIGRATION_RU_PARTNER_NAME");
+        $this->PARTNER_URI = GetMessage("SPRINT_MIGRATION_RU_PARTNER_URI");
     }
 
-    function DoInstall()
+    public function DoInstall()
     {
         RegisterModule($this->MODULE_ID);
+
         CopyDirFiles(__DIR__ . "/admin", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin");
+        $this->installGadgets();
     }
 
-    function DoUninstall()
+    public function DoUninstall()
     {
-        //launch upgrade when reinstalled module
         DeleteDirFiles(__DIR__ . "/admin", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin");
+        $this->unnstallGadgets();
+
         UnRegisterModule($this->MODULE_ID);
     }
 
-    function GetModuleRightList()
+    public function installGadgets()
+    {
+        CopyDirFiles(__DIR__ . "/gadgets", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/gadgets", true, true);
+    }
+
+    public function unnstallGadgets()
+    {
+        DeleteDirFiles(__DIR__ . "/gadgets", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/gadgets");
+    }
+
+    public function GetModuleRightList()
     {
         $arr = [
             "reference_id" => ["D", "W"],
-            "reference" => [
-                "[D] " . GetMessage("SPRINT_MIGRATION_RIGHT_D"),
-                "[W] " . GetMessage("SPRINT_MIGRATION_RIGHT_W"),
+            "reference"    => [
+                "[D] " . Locale::getMessage("RIGHT_D"),
+                "[W] " . Locale::getMessage("RIGHT_W"),
             ],
         ];
         return $arr;

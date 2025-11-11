@@ -2,31 +2,137 @@
 
 namespace Sprint\Migration\Tables;
 
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\TextField;
+use Sprint\Migration\Exceptions\MigrationException;
+use Sprint\Migration\HelperManager;
+
 class StorageTable extends AbstractTable
 {
+    protected string $category;
 
-    public function __construct($name = 'default')
+    /**
+     * @param string $tableName
+     * @param string $category
+     *
+     * @throws MigrationException
+     */
+    public function __construct(string $tableName, string $category)
     {
-        parent::__construct('sprint_storage_' . $name);
+        parent::__construct($tableName);
+
+        $this->category = $category;
+
+        if (empty($category)) {
+            throw new MigrationException('Need storage category');
+        }
     }
 
-    protected function createTable()
+    /**
+     * @throws MigrationException
+     */
+    public function saveData(string $name, $value = '')
     {
-        $this->query('CREATE TABLE IF NOT EXISTS `#TABLE1#`(
-              `id` INT NOT NULL AUTO_INCREMENT NOT NULL,
-              `category` varchar(255) COLLATE #COLLATE# NOT NULL,
-              `name` varchar(255) COLLATE #COLLATE# NOT NULL,
-              `data` longtext COLLATE #COLLATE# NOT NULL, 
-              PRIMARY KEY (id), UNIQUE KEY `fullname` (`category`,`name`)
-              )ENGINE=InnoDB DEFAULT CHARSET=#CHARSET# COLLATE=#COLLATE# AUTO_INCREMENT=1;'
+        if (empty($name)) {
+            throw new MigrationException('Need name for saved data');
+        }
+
+        $row = $this->getOnce([
+            'category' => $this->category,
+            'name'     => $name,
+        ]);
+
+        if ($row) {
+            $this->update($row['id'], [
+                'data' => $value,
+            ]);
+        } else {
+            $this->add([
+                'category' => $this->category,
+                'name'     => $name,
+                'data'     => $value,
+            ]);
+        }
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    public function getSavedData(string $name, $default = '')
+    {
+        if (empty($name)) {
+            throw new MigrationException('Need name for saved data');
+        }
+
+        $row = $this->getOnce([
+            'category' => $this->category,
+            'name'     => $name,
+        ]);
+
+        return ($row) ? $row['data'] : $default;
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    public function deleteSavedData(string $name = '')
+    {
+        if ($name) {
+            $rows = $this->getAll([
+                'category' => $this->category,
+                'name'     => $name,
+            ]);
+        } else {
+            $rows = $this->getAll([
+                'category' => $this->category,
+            ]);
+        }
+
+        foreach ($rows as $row) {
+            $this->delete($row['id']);
+        }
+    }
+
+    public function getMap(): array
+    {
+        return [
+            new IntegerField('id', [
+                'primary'      => true,
+                'autocomplete' => true,
+            ]),
+            new StringField('category', [
+                'size' => 255,
+            ]),
+            new StringField('name', [
+                'size' => 255,
+            ]),
+            new TextField('data', [
+                'long'       => true,
+                'serialized' => true,
+            ]),
+        ];
+    }
+
+
+    protected function createDbTable(): void
+    {
+        parent::createDbTable();
+
+        $helper = HelperManager::getInstance();
+
+        $helper->Sql()->addIndexIfNotExists(
+            $this->getTableName(),
+            'category',
+            ['category']
+        );
+
+        $helper->Sql()->addIndexIfNotExists(
+            $this->getTableName(),
+            'fullname',
+            ['category', 'name']
         );
     }
-
-    protected function dropTable()
-    {
-        $this->query('DROP TABLE IF EXISTS `#TABLE1#`;');
-    }
-
 }
 
 

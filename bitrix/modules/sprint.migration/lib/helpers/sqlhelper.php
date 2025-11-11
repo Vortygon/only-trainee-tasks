@@ -5,131 +5,199 @@ namespace Sprint\Migration\Helpers;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\ORM\Entity;
+use Bitrix\Main\ORM\Fields\ScalarField;
+use Closure;
+use Exception;
+use Sprint\Migration\Exceptions\HelperException;
 use Sprint\Migration\Helper;
+use Throwable;
 
-/**
- * Class SqlHelper
- *
- * @package Sprint\Migration\Helpers
- */
 class SqlHelper extends Helper
 {
     /**
-     * @param $query
-     *
+     * @throws HelperException
      * @throws SqlQueryException
-     * @return Result
      */
-    public function query($query)
+    public function transaction(Closure $func): void
     {
-        return Application::getConnection()->query($query);
+        $connection = Application::getConnection();
+        $connection->startTransaction();
+        try {
+            $ok = $func();
+
+            $this->throwApplicationExceptionIfExists();
+
+            if ($ok === false) {
+                throw new HelperException('transaction return false');
+            }
+
+            $connection->commitTransaction();
+        } catch (Throwable $e) {
+            $connection->rollbackTransaction();
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    public function forSql($value, $maxLength = 0): string
+    {
+        $connection = Application::getConnection();
+
+        return $connection->getSqlHelper()->forSql($value, $maxLength);
     }
 
     /**
-     * @param     $value
-     * @param int $maxLength
-     *
-     * @return string
+     * @throws HelperException
      */
-    public function forSql($value, $maxLength = 0)
+    public function getColumn(string $tableName, string $columnName): ?ScalarField
     {
-        return Application::getConnection()->getSqlHelper()->forSql($value, $maxLength);
-    }
+        $connection = Application::getConnection();
 
-    /**
-     * @param $table
-     * @param $name
-     *
-     * @throws SqlQueryException
-     * @return array|false
-     */
-    public function getColumn($table, $name)
-    {
-        return $this->query(sprintf('SHOW COLUMNS FROM `%s` WHERE Field="%s"', $table, $name))->Fetch();
-    }
-
-    /**
-     * @param string $table
-     * @param string $name
-     * @param string $attributes
-     *
-     * @throws SqlQueryException
-     */
-    public function addColumn($table, $name, $attributes)
-    {
-        //$attributes = 'int(11) unsigned DEFAULT NULL AFTER `ID`';
-
-        $this->query(sprintf('ALTER TABLE `%s` ADD COLUMN %s %s', $table, $name, $attributes));
-    }
-
-    /**
-     * @param string $table
-     * @param string $name
-     * @param        $attributes
-     *
-     * @throws SqlQueryException
-     */
-    public function addColumnIfNotExists($table, $name, $attributes)
-    {
-        $column = $this->getColumn($table, $name);
-
-        if (empty($column)) {
-            $this->addColumn($table, $name, $attributes);
+        try {
+            return $connection->getTableField($tableName, $columnName);
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
     /**
-     * @param string $table
-     * @param string $name
-     *
-     * @throws SqlQueryException
-     * @return array|false
+     * @throws HelperException
      */
-    public function getIndex($table, $name)
+    public function addIndexIfNotExists(string $tableName, string $indexName, $columnNames)
     {
-        return $this->query(sprintf('SHOW INDEX FROM `%s` WHERE Key_name="%s"', $table, $name))->Fetch();
-    }
-
-    /**
-     * @param string $table
-     * @param string $name
-     * @param string|array $columns
-     *
-     * @throws SqlQueryException
-     */
-    public function addIndex($table, $name, $columns)
-    {
-        $columns = $this->prepareColumnsForIndex($columns);
-
-        $this->query(sprintf('ALTER TABLE `%s` ADD INDEX `%s` (%s)', $table, $name, $columns));
-    }
-
-    /**
-     * @param string $table
-     * @param string $name
-     * @param string|array $columns
-     *
-     * @throws SqlQueryException
-     */
-    public function addIndexIfNotExists($table, $name, $columns)
-    {
-        $index = $this->getIndex($table, $name);
-
-        if (empty($index)) {
-            $this->addIndex($table, $name, $columns);
+        if ($this->hasIndex($tableName, $columnNames)) {
+            $this->addIndex($tableName, $indexName, $columnNames);
         }
     }
 
-    private function prepareColumnsForIndex($columns)
+    /**
+     * @throws HelperException
+     */
+    public function hasIndex(string $tableName, array $columnNames): bool
     {
-        $columns = is_array($columns) ? $columns : [$columns];
-        $columns = array_map(
-            function ($name) {
-                return "`$name`";
-            },
-            $columns
-        );
+        $connection = Application::getConnection();
 
-        return implode(',', $columns);
+        try {
+            return $connection->isIndexExists($tableName, $columnNames);
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function addIndex(string $tableName, string $indexName, array $columnNames)
+    {
+        $connection = Application::getConnection();
+
+        try {
+            $connection->createIndex($tableName, $indexName, $columnNames);
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    public function getIndex(string $tableName, array $columnNames): ?string
+    {
+        $connection = Application::getConnection();
+
+        return $connection->getIndexName($tableName, $columnNames);
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function dropTable(string $tableName)
+    {
+        $connection = Application::getConnection();
+
+        try {
+            $connection->dropTable($tableName);
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function createTable(Entity $entity)
+    {
+        try {
+            $entity->createDbTable();
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    public function hasTable(string $tableName): bool
+    {
+        $connection = Application::getConnection();
+
+        return $connection->isTableExists($tableName);
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function restoreColumns(Entity $entity)
+    {
+        foreach ($entity->getScalarFields() as $entityField) {
+            $this->addColumnIfNotExists($entity->getDBTableName(), $entityField);
+        }
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function addColumnIfNotExists(string $tableName, ScalarField $scalarField, string $attributes = '')
+    {
+        if (!$this->hasColumn($tableName, $scalarField->getName())) {
+            $this->addColumn($tableName, $scalarField, $attributes);
+        }
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function hasColumn(string $tableName, string $columnName): bool
+    {
+        $connection = Application::getConnection();
+        try {
+            $tableFields = $connection->getTableFields($tableName);
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        return isset($tableFields[$columnName]);
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function addColumn(string $tableName, ScalarField $scalarField, string $attributes = '')
+    {
+        $connection = Application::getConnection();
+        $sqlHelper = $connection->getSqlHelper();
+
+        $columnName = $scalarField->getName();
+        $columnType = $sqlHelper->getColumnTypeByField($scalarField);
+
+        $this->query("ALTER TABLE $tableName ADD COLUMN $columnName $columnType $attributes");
+    }
+
+    /**
+     * @throws HelperException
+     */
+    public function query($query): Result
+    {
+        $connection = Application::getConnection();
+
+        try {
+            return $connection->query($query);
+        } catch (Exception $e) {
+            throw new HelperException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

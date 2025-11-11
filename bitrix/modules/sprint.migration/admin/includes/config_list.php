@@ -1,6 +1,7 @@
 <?php
 /** @var $versionConfig VersionConfig */
 
+use Sprint\Migration\Locale;
 use Sprint\Migration\VersionConfig;
 
 $versionConfig = new VersionConfig();
@@ -8,25 +9,25 @@ $configList = $versionConfig->getList();
 
 ?>
 
-<? foreach ($configList as $configItem): ?><?
+<?php foreach ($configList as $configItem) { ?><?php
 
     $configValues = $versionConfig->humanValues($configItem['values']);
 
     ?>
-    <div class="sp-group">
-        <div class="sp-group-row">
-            <div class="sp-block sp-white">
-                <h3><?= GetMessage('SPRINT_MIGRATION_CONFIG') ?>: <?= $configItem['title'] ?></h3>
+    <div class="sp-table">
+        <div class="sp-row">
+            <div class="sp-col sp-white">
+                <h3><?= Locale::getMessage('CONFIG') ?>: <?= $configItem['title'] ?></h3>
                 <table class="sp-config">
-                    <? foreach ($configValues as $key => $val) : ?>
+                    <?php foreach ($configValues as $key => $val) { ?>
                         <tr>
-                            <td><?= GetMessage('SPRINT_MIGRATION_CONFIG_' . $key) ?></td>
+                            <td><?= Locale::getMessage('CONFIG_' . $key) ?></td>
                             <td><?= $key ?></td>
                             <td><?= nl2br($val) ?></td>
                         </tr>
-                    <? endforeach; ?>
+                    <?php } ?>
                 </table>
             </div>
         </div>
     </div>
-<? endforeach; ?>
+<?php } ?>

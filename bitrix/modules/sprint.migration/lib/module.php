@@ -3,94 +3,150 @@
 namespace Sprint\Migration;
 
 use COption;
-use Exception;
+use Sprint\Migration\Exceptions\MigrationException;
 
 class Module
 {
+    const ID = 'sprint.migration';
+    const EXCHANGE_VERSION = 2;
+    private static string $version = '';
 
     public static function getDbOption($name, $default = '')
     {
-        return COption::GetOptionString('sprint.migration', $name, $default);
+        return COption::GetOptionString(Module::ID, $name, $default);
     }
 
     public static function setDbOption($name, $value)
     {
-        if ($value != COption::GetOptionString('sprint.migration', $name, '')) {
-            COption::SetOptionString('sprint.migration', $name, $value);
+        if ($value != COption::GetOptionString(Module::ID, $name)) {
+            COption::SetOptionString(Module::ID, $name, $value);
         }
     }
 
     public static function removeDbOption($name)
     {
-        COption::RemoveOption('sprint.migration', $name);
+        COption::RemoveOption(Module::ID, $name);
     }
 
     public static function removeDbOptions()
     {
-        COption::RemoveOption('sprint.migration');
+        COption::RemoveOption(Module::ID);
     }
 
-    public static function getDocRoot()
+    public static function getDocRoot(): string
     {
         return rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR);
     }
 
-    public static function getPhpInterfaceDir()
+    public static function getPhpInterfaceDir($absolute = true): string
     {
+        $root = $absolute ? self::getDocRoot() : '';
+
         if (is_dir(self::getDocRoot() . '/local/php_interface')) {
-            return self::getDocRoot() . '/local/php_interface';
+            return $root . '/local/php_interface';
         } else {
-            return self::getDocRoot() . '/bitrix/php_interface';
+            return $root . '/bitrix/php_interface';
         }
     }
 
-    public static function getModuleDir()
+    public static function getModuleDir($absolute = true): string
     {
-        if (is_file(self::getDocRoot() . '/local/modules/sprint.migration/include.php')) {
-            return self::getDocRoot() . '/local/modules/sprint.migration';
+        $root = $absolute ? self::getDocRoot() : '';
+
+        if (is_file(self::getDocRoot() . '/local/modules/' . Module::ID . '/include.php')) {
+            return $root . '/local/modules/' . Module::ID;
         } else {
-            return self::getDocRoot() . '/bitrix/modules/sprint.migration';
+            return $root . '/bitrix/modules/' . Module::ID;
         }
     }
 
-    public static function getRelativeDir($dir)
+    public static function getModuleTemplateFile(string $name): string
     {
-        $docroot = Module::getDocRoot();
+        return Module::getModuleDir() . '/templates/' . $name . '.php';
+    }
 
-        if (strpos($dir, $docroot) === 0) {
-            $dir = substr($dir, strlen($docroot));
+    /**
+     * @throws MigrationException
+     */
+    public static function createDir($dir)
+    {
+        if (!is_dir($dir)) {
+            mkdir($dir, BX_DIR_PERMISSIONS, true);
+        }
+
+        if (!is_dir($dir)) {
+            throw new MigrationException(
+                Locale::getMessage(
+                    'ERR_CANT_CREATE_DIRECTORY',
+                    [
+                        '#NAME#' => $dir,
+                    ]
+                )
+            );
         }
 
         return $dir;
     }
 
-    public static function getVersion()
+    public static function deletePath($dir): void
     {
-        $arModuleVersion = [];
-        /** @noinspection PhpIncludeInspection */
-        include self::getModuleDir() . '/install/version.php';
-        return isset($arModuleVersion['VERSION']) ? $arModuleVersion['VERSION'] : '';
+        if (is_dir($dir)) {
+            $files = scandir($dir);
+            foreach ($files as $file) {
+                if ($file != "." && $file != "..") {
+                    self::deletePath("$dir/$file");
+                }
+            }
+            rmdir($dir);
+        } elseif (file_exists($dir)) {
+            unlink($dir);
+        }
     }
 
-    public static function checkHealth()
+    public static function movePath(string $from, string $to): void
     {
-        if (isset($GLOBALS['DBType']) && strtolower($GLOBALS['DBType']) == 'mssql') {
-            Throw new Exception('mssql not supported');
-        }
+        rename($from, $to);
+    }
 
+    public static function getVersion(): string
+    {
+        if (!self::$version) {
+            $arModuleVersion = [];
+            include self::getModuleDir() . '/install/version.php';
+            self::$version = (string)($arModuleVersion['VERSION'] ?? '');
+        }
+        return self::$version;
+    }
+
+    /**
+     * @throws MigrationException
+     */
+    public static function checkHealth(): void
+    {
         if (!function_exists('json_encode')) {
-            Throw new Exception('json functions not supported');
+            throw new MigrationException(
+                Locale::getMessage(
+                    'ERR_JSON_NOT_SUPPORTED'
+                )
+            );
         }
 
-        if (version_compare(PHP_VERSION, '5.4', '<')) {
-            Throw new Exception(PHP_VERSION . 'not supported');
+        if (version_compare(PHP_VERSION, '8.1', '<')) {
+            throw new MigrationException(
+                Locale::getMessage(
+                    'ERR_PHP_NOT_SUPPORTED',
+                    [
+                        '#NAME#' => PHP_VERSION,
+                    ]
+                )
+            );
         }
 
         if (
-            is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sprint.migration/include.php') &&
-            is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/sprint.migration/include.php')
+            is_file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . Module::ID . '/include.php')
+            && is_file($_SERVER['DOCUMENT_ROOT'] . '/local/modules/' . Module::ID . '/include.php')
         ) {
-            Throw new Exception('module installed to bitrix and local folder');
+            throw new MigrationException('module installed to bitrix and local folder');
         }
     }
 }

@@ -2,41 +2,38 @@
 
 namespace Sprint\Migration\Tables;
 
-use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\ORM\Data;
 
-class OptionTable extends DataManager
+class OptionTable extends Data\DataManager
 {
-
-    public static function getTableName()
+    public static function getTableName(): string
     {
         return 'b_option';
     }
 
-    public static function getMap()
+    public static function getMap(): array
     {
         return [
-            'MODULE_ID' => [
+            'MODULE_ID'   => [
                 'data_type' => 'string',
-                'primary' => true,
+                'primary'   => true,
             ],
-            'NAME' => [
+            'NAME'        => [
                 'data_type' => 'string',
-                'primary' => true,
+                'primary'   => true,
             ],
-            'VALUE' => [
+            'VALUE'       => [
                 'data_type' => 'string',
-                'required' => false,
+                'required'  => false,
             ],
             'DESCRIPTION' => [
                 'data_type' => 'string',
-                'required' => false,
+                'required'  => false,
             ],
-            'SITE_ID' => [
+            'SITE_ID'     => [
                 'data_type' => 'string',
-                'required' => false,
+                'required'  => false,
             ],
         ];
     }
-
-
 }

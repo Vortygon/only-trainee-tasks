@@ -1,68 +1,67 @@
 <?php
 
-$search = '';
-$listview = 'list';
-$addtag = '';
+use Sprint\Migration\Locale;
+use Sprint\Migration\VersionConfig;
 
+/** @var $versionConfig VersionConfig */
 
+$getOnclickMenu = function () {
+    $menu = [];
+    $menu[] = [
+        'TEXT'    => Locale::getMessage('UP_START_WITH_TAG'),
+        'ONCLICK' => 'migrationMigrationsUpWithTag()',
+    ];
+    $menu[] = [
+        'TEXT'    => Locale::getMessage('DOWN_START'),
+        'ONCLICK' => 'migrationMigrationsDownConfirm()',
+    ];
+    return CUtil::PhpToJSObject($menu);
+}
 ?>
-<div id="migration-container" data-sessid="<?= bitrix_sessid() ?>">
-    <div class="sp-group">
-        <div class="sp-group-row2">
-            <div class="sp-block sp-block-scroll sp-white">
-                <div id="migration_migrations" class="sp-scroll"></div>
+<div id="migration_container" data-sessid="<?= bitrix_sessid() ?>" data-config="<?= $versionConfig->getName() ?>">
+    <div class="sp-table">
+        <div class="sp-row2">
+            <div class="sp-col sp-col-scroll sp-white">
+                <div class="sp-search">
+                    <input id="migration_search" placeholder="<?= Locale::getMessage('SEARCH') ?>" type="text" value="" class="adm-input"/>
+                    <select id="migration_view">
+                        <option value="migration_view_actual"><?= Locale::getMessage('TOGGLE_ACTUAL') ?></option>
+                        <option value="migration_view_all"><?= Locale::getMessage('TOGGLE_LIST') ?></option>
+                        <option value="migration_view_new"><?= Locale::getMessage('TOGGLE_NEW') ?></option>
+                        <option value="migration_view_installed"><?= Locale::getMessage('TOGGLE_INSTALLED') ?></option>
+                        <option value="migration_view_unknown"><?= Locale::getMessage('TOGGLE_UNKNOWN') ?></option>
+                        <option value="migration_view_tag"><?= Locale::getMessage('TOGGLE_TAG') ?></option>
+                        <option value="migration_view_modified"><?= Locale::getMessage('TOGGLE_MODIFIED') ?></option>
+                        <option value="migration_view_older"><?= Locale::getMessage('TOGGLE_OLDER') ?></option>
+                        <option value="migration_view_status"><?= Locale::getMessage('TOGGLE_STATUS') ?></option>
+                    </select>
+                    <input id="migration_refresh" type="button" value="<?= Locale::getMessage('SEARCH') ?>"/>
+                </div>
+                <div id="migration_migrations"></div>
             </div>
-            <div class="sp-block sp-block-scroll">
-                <div id="migration_progress" class="sp-scroll"></div>
-            </div>
+            <div class="sp-col sp-col-scroll" id="migration_log"></div>
         </div>
     </div>
-    <div class="sp-group">
-        <div class="sp-group-row2">
-            <div class="sp-block">
+    <div class="sp-table">
+        <div class="sp-row2">
+            <div class="sp-col">
                 <input type="button"
-                       value="<?= GetMessage('SPRINT_MIGRATION_UP_START') ?>"
+                       value="<?= Locale::getMessage('UP_START') ?>"
                        onclick="migrationMigrationsUpConfirm();"
                        class="adm-btn-green"/>
-                <input type="button"
-                       value="<?= GetMessage('SPRINT_MIGRATION_DOWN_START') ?>"
-                       onclick="migrationMigrationsDownConfirm();"/>
-                <span title="<?= GetMessage('SPRINT_MIGRATION_ADDTAG_TITLE') ?>">
-                <?= GetMessage('SPRINT_MIGRATION_ADDTAG') ?>
-                <input placeholder="<?= GetMessage('SPRINT_MIGRATION_ADDTAG_TAG') ?>"
-                       style="width: 100px;"
-                       type="text"
-                       value="<?= $addtag ?>"
-                       class="adm-input"
-                       name="migration_addtag"/>
-                    </span>
+                <a onclick="this.blur();BX.adminShowMenu(this, <?= $getOnclickMenu() ?>, {active_class: 'adm-btn-active',public_frame: '0'}); return false;"
+                   href="javascript:void(0)"
+                   class="adm-btn"
+                   hidefocus="true">&equiv;</a>
+                <div id="migration_loading"><?= Locale::getMessage('LOADING_TEXT') ?></div>
             </div>
-            <div class="sp-block">
-                <input placeholder="<?= GetMessage('SPRINT_MIGRATION_SEARCH') ?>"
-                       style=""
-                       type="text"
-                       value="<?= $search ?>"
-                       class="adm-input"
-                       name="migration_search"/>
-                <select class="sp-stat">
-                    <option <? if ($listview == 'list'): ?>selected="selected"<? endif ?>
-                            value="list"><?= GetMessage('SPRINT_MIGRATION_TOGGLE_LIST') ?></option>
-                    <option <? if ($listview == 'new'): ?>selected="selected"<? endif ?>
-                            value="new"><?= GetMessage('SPRINT_MIGRATION_TOGGLE_NEW') ?></option>
-                    <option <? if ($listview == 'installed'): ?>selected="selected"<? endif ?>
-                            value="installed"><?= GetMessage('SPRINT_MIGRATION_TOGGLE_INSTALLED') ?></option>
-                    <option <? if ($listview == 'status'): ?>selected="selected"<? endif ?>
-                            value="status"><?= GetMessage('SPRINT_MIGRATION_TOGGLE_STATUS') ?></option>
-                </select>
-                <input type="button" value="<?= GetMessage('SPRINT_MIGRATION_SEARCH') ?>" class="sp-search"/>
-
+            <div class="sp-col">
+                <div id="migration_progress"></div>
+                <div id="migration_actions"></div>
             </div>
         </div>
     </div>
     <div class="sp-separator"></div>
-    <? foreach (['default', 'configurator'] as $builderGroup): ?>
-        <? include __DIR__ . '/builder_group.php' ?>
-    <? endforeach ?>
-
+    <?php include __DIR__ . '/builder_group.php' ?>
     <div class="sp-separator"></div>
 </div>

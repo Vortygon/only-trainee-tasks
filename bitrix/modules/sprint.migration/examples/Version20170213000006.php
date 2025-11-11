@@ -4,14 +4,17 @@ namespace Sprint\Migration;
 
 class Version20170213000006 extends Version
 {
-
     protected $description = "Пример работы с highload-блоками # 2";
 
+    /**
+     * @throws Exceptions\HelperException
+     * @return bool|void
+     */
     public function up()
     {
         $helper = $this->getHelperManager();
         $hlblockId = $helper->Hlblock()->saveHlblock([
-            'NAME' => 'Test',
+            'NAME'       => 'Test',
             'TABLE_NAME' => 'hl_test',
         ]);
 
@@ -25,8 +28,19 @@ class Version20170213000006 extends Version
                 ['FIELD_NAME' => 'UF_UPDATED_AT', "USER_TYPE_ID" => "datetime"],
             ]
         );
+
+        //Делаем поле "Название" обязательным если он существует
+        $helper->UserTypeEntity()->updateUserTypeEntityIfExists(
+            'HLBLOCK_' . $hlblockId,
+            'UF_NAME',
+            ['MANDATORY' => 'Y'],
+        );
     }
 
+    /**
+     * @throws Exceptions\HelperException
+     * @return bool|void
+     */
     public function down()
     {
         $helper = $this->getHelperManager();
@@ -44,7 +58,5 @@ class Version20170213000006 extends Version
             ]
         );
         $helper->Hlblock()->deleteHlblock($hlblockId);
-
     }
-
 }

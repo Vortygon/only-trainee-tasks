@@ -2,79 +2,52 @@
 
 use Sprint\Migration\VersionConfig;
 use Sprint\Migration\VersionManager;
+use Sprint\Migration\Exceptions\BuilderException;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
 }
 
-$hasSteps = (
-    ($_POST["step_code"] == "migration_create") ||
-    ($_POST["step_code"] == "migration_reset")
-);
+$stepCode = htmlspecialchars($_POST['step_code']??'');
+$hasSteps = (($stepCode == 'migration_create') || ($stepCode == 'migration_reset'));
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $hasSteps && check_bitrix_sessid('send_sessid')) {
-    /** @noinspection PhpIncludeInspection */
-    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
-
+if ($hasSteps && check_bitrix_sessid()) {
     /** @var $versionConfig VersionConfig */
     $versionManager = new VersionManager($versionConfig);
 
     $builderName = !empty($_POST['builder_name']) ? trim($_POST['builder_name']) : '';
 
-    if ($_POST["step_code"] == "migration_create") {
+    try {
         $builder = $versionManager->createBuilder($builderName, $_POST);
-    } else {
-        $builder = $versionManager->createBuilder($builderName, []);
+    } catch (BuilderException $e) {
+        return;
     }
 
-    if (!$builder) {
-        /** @noinspection PhpIncludeInspection */
-        require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
-        die();
-    }
-
-    if ($_POST["step_code"] == "migration_create") {
-        $builder->executeBuilder();
-
+    if ($stepCode == 'migration_create') {
+        $builder->buildExecute();
+        $builder->buildAfter();
         $builder->renderHtml();
 
         if ($builder->isRestart()) {
-            $json = json_encode($builder->getRestartParams());
             ?>
-            <script>migrationBuilder(<?=$json?>);</script><?
-
+            <script>migrationBuilderRestart();</script><?php
         } elseif ($builder->isRebuild()) {
             ?>
-            <script>migrationEnableButtons(1);</script><?
-
-        } elseif ($builder->hasActions()) {
-            $actions = $builder->getActions();
-            foreach ($actions as $action) {
-                if ($action['type'] == 'redirect') {
-                    ?>
-                    <script>window.location.replace("<?=$action['url']?>");</script><?
-                }
-            }
-
+            <script>migrationEnableButtons(1);</script><?php
         } else {
             ?>
             <script>
-                migrationMigrationRefresh(function () {
-                    migrationScrollList();
+                migrationListRefresh(function () {
+                    migrationListScroll();
                     migrationEnableButtons(1);
                 });
-            </script><?
+            </script><?php
         }
-    }
-
-
-    if ($_POST["step_code"] == "migration_reset") {
+    } elseif ($stepCode == 'migration_reset') {
         $builder->renderHtml();
         ?>
-        <script>migrationMigrationRefresh();</script><?
+        <script>
+            migrationEnableButtons(1);
+        </script><?php
     }
-
-    /** @noinspection PhpIncludeInspection */
-    require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
-    die();
 }

@@ -6,6 +6,7 @@ use CLang;
 use CSite;
 use Sprint\Migration\Exceptions\HelperException;
 use Sprint\Migration\Helper;
+use Sprint\Migration\Locale;
 
 class SiteHelper extends Helper
 {
@@ -19,14 +20,16 @@ class SiteHelper extends Helper
         $by = 'def';
         $order = 'desc';
 
-        /** @noinspection PhpDynamicAsStaticMethodCallInspection */
         $item = CSite::GetList($by, $order, ['ACTIVE' => 'Y'])->Fetch();
 
         if ($item) {
             return $item['LID'];
         }
-
-        $this->throwException(__METHOD__, 'Default site not found');
+        throw new HelperException(
+            Locale::getMessage(
+                'ERR_DEFAULT_SITE_NOT_FOUND'
+            )
+        );
     }
 
     /**
@@ -39,7 +42,6 @@ class SiteHelper extends Helper
         $order = 'desc';
 
         $sids = [];
-        /** @noinspection PhpDynamicAsStaticMethodCallInspection */
         $dbres = CSite::GetList($by, $order, $filter);
         while ($item = $dbres->Fetch()) {
             $sids[] = $item;
@@ -58,7 +60,11 @@ class SiteHelper extends Helper
         if (!empty($items)) {
             return $items;
         }
-        $this->throwException(__METHOD__, 'Active sites not found');
+        throw new HelperException(
+            Locale::getMessage(
+                'ERR_ACTIVE_SITES_NOT_FOUND'
+            )
+        );
     }
 
     /**
@@ -136,11 +142,9 @@ class SiteHelper extends Helper
         }
 
         $langs = new CLang;
-        $ok = $langs->Update($siteId, [
+        return $langs->Update($siteId, [
             'TEMPLATE' => $validTemplates,
         ]);
-
-        return $ok;
     }
 
 }
